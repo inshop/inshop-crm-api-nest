@@ -17,14 +17,18 @@ import { IdPipe } from '../../../core/transformers/id.pipe';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { Role } from '../../entities/role.entity';
 import { Module } from '../../entities/module.entity';
-import { AuthAdminGuard } from '../../guards/authAdmin.guard';
+import { TokenGuard } from '../../guards/token.guard';
+import { Roles } from '../../decorators/roles.decorator';
+import { RolesGuard } from '../../guards/roles.guard';
+import { AppRole } from '../../constants/roles.constants';
 
-@UseGuards(AuthAdminGuard)
+@UseGuards(TokenGuard, RolesGuard)
 @Controller('admin/modules/:moduleId/roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Post()
+  @Roles(AppRole.ROLE_CREATE)
   create(
     @Param('moduleId', ObjectPipe(Module)) module: Module,
     @Body(ValidationPipe) createRoleDto: CreateRoleDto,
@@ -33,11 +37,13 @@ export class RolesController {
   }
 
   @Get()
+  @Roles(AppRole.ROLE_LIST)
   findAll(@Param('moduleId', ObjectPipe(Module)) module: Module) {
     return this.rolesService.findAll(module.id);
   }
 
   @Get(':id')
+  @Roles(AppRole.ROLE_DETAILS)
   findOne(
     @Param('moduleId', ObjectPipe(Module)) module: Module,
     @Param('id', ObjectPipe(Role, ['module'])) role: Role,
@@ -50,6 +56,7 @@ export class RolesController {
   }
 
   @Patch(':id')
+  @Roles(AppRole.ROLE_UPDATE)
   async update(
     @Param('moduleId', ObjectPipe(Module)) module: Module,
     @Param('id', ObjectPipe(Role, ['module'])) role: Role,
@@ -65,6 +72,7 @@ export class RolesController {
   }
 
   @Delete(':id')
+  @Roles(AppRole.ROLE_DELETE)
   async remove(
     @Param('moduleId', ObjectPipe(Module)) module: Module,
     @Param('id', ObjectPipe(Role, ['module'])) role: Role,

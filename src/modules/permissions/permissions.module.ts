@@ -17,6 +17,8 @@ import { User } from './entities/user.entity';
 import { Module as ModuleEntity } from './entities/module.entity';
 import { UserToken } from './entities/user-token.entity';
 import { UserTokenCleanupService } from './services/user-token-cleanup.service';
+import { RolesGuard } from './guards/roles.guard';
+import { Reflector } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { UserTokenCleanupService } from './services/user-token-cleanup.service';
     UsersService,
     UserTokenService,
     UserTokenCleanupService,
+    RolesGuard,
+    Reflector,
   ],
   exports: [AuthService],
 })

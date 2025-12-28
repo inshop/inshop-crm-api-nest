@@ -8,7 +8,7 @@ import { AuthService } from '../services/auth.service';
 import { Request } from 'express';
 
 @Injectable()
-export class AuthAdminGuard implements CanActivate {
+export class TokenGuard implements CanActivate {
   constructor(private authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

@@ -17,14 +17,18 @@ import { IdPipe } from '../../../core/transformers/id.pipe';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { Client } from '../../entities/client.entity';
 import { Contact } from '../../entities/contact.entity';
-import { AuthAdminGuard } from '../../../permissions/guards/authAdmin.guard';
+import { TokenGuard } from '../../../permissions/guards/token.guard';
+import { Roles } from '../../../permissions/decorators/roles.decorator';
+import { RolesGuard } from '../../../permissions/guards/roles.guard';
+import { AppRole } from '../../../permissions/constants/roles.constants';
 
-@UseGuards(AuthAdminGuard)
+@UseGuards(TokenGuard, RolesGuard)
 @Controller('admin/clients/:clientId/contacts')
 export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
 
   @Post()
+  @Roles(AppRole.CONTACT_CREATE)
   create(
     @Param('clientId', ObjectPipe(Client)) client: Client,
     @Body(ValidationPipe) createContactDto: CreateContactDto,
@@ -33,11 +37,13 @@ export class ContactsController {
   }
 
   @Get()
+  @Roles(AppRole.CONTACT_LIST)
   findAll(@Param('clientId', ObjectPipe(Client)) client: Client) {
     return this.contactsService.findAll(client.id);
   }
 
   @Get(':id')
+  @Roles(AppRole.CONTACT_DETAILS)
   findOne(
     @Param('clientId', ObjectPipe(Client)) client: Client,
     @Param('id', ObjectPipe(Contact, ['client'])) contact: Contact,
@@ -50,6 +56,7 @@ export class ContactsController {
   }
 
   @Patch(':id')
+  @Roles(AppRole.CONTACT_UPDATE)
   async update(
     @Param('clientId', ObjectPipe(Client)) client: Client,
     @Param('id', ObjectPipe(Contact, ['client'])) contact: Contact,
@@ -65,6 +72,7 @@ export class ContactsController {
   }
 
   @Delete(':id')
+  @Roles(AppRole.CONTACT_DELETE)
   async remove(
     @Param('clientId', ObjectPipe(Client)) client: Client,
     @Param('id', ObjectPipe(Contact, ['client'])) contact: Contact,

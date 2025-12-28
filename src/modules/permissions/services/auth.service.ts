@@ -87,6 +87,11 @@ export class AuthService {
 
     const user = await this.usersRepository.findOne({
       where: { id: verified.id },
+      relations: {
+        group: {
+          roles: true,
+        },
+      },
     });
 
     if (!user) {
