@@ -6,9 +6,10 @@ import { ContactsService } from './services/contacts.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from './entities/client.entity';
 import { Contact } from './entities/contact.entity';
+import { PermissionsModule } from '../permissions/permissions.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Client, Contact])],
+  imports: [TypeOrmModule.forFeature([Client, Contact]), PermissionsModule],
   controllers: [ClientsController, ContactsController],
   providers: [ClientsService, ContactsService],
 })

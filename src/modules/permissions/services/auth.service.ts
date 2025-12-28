@@ -11,6 +11,7 @@ import * as crypto from 'node:crypto';
 import { ResponseAuthDto } from '../dto/response/response-auth.dto';
 import { RefreshAuthDto } from '../dto/refresh-auth.dto';
 import { LogoutAuthDto } from '../dto/logout-auth.dto';
+import config from '../../../config/config';
 
 type UserJwtPayload = {
   id: number;
@@ -61,13 +62,15 @@ export class AuthService {
     return token;
   }
 
-  private async verifyToken(
+  public async verifyToken(
     token: string,
   ): Promise<{ verified: VerifiedToken; user: User }> {
     let verified: VerifiedToken;
 
     try {
-      verified = await this.jwtService.verifyAsync<VerifiedToken>(token);
+      verified = await this.jwtService.verifyAsync<VerifiedToken>(token, {
+        secret: config().jwtSecret,
+      });
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }

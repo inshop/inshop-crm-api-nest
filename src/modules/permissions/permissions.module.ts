@@ -38,5 +38,6 @@ import { UserTokenCleanupService } from './services/user-token-cleanup.service';
     UserTokenService,
     UserTokenCleanupService,
   ],
+  exports: [AuthService],
 })
 export class PermissionsModule {}
