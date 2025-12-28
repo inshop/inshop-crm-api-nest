@@ -16,6 +16,7 @@ import { Role } from './entities/role.entity';
 import { User } from './entities/user.entity';
 import { Module as ModuleEntity } from './entities/module.entity';
 import { UserToken } from './entities/user-token.entity';
+import { UserTokenCleanupService } from './services/user-token-cleanup.service';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { UserToken } from './entities/user-token.entity';
     RolesService,
     UsersService,
     UserTokenService,
+    UserTokenCleanupService,
   ],
 })
 export class PermissionsModule {}

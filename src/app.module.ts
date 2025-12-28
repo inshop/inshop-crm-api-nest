@@ -9,6 +9,7 @@ import { IsUniqueConstraint } from './modules/core/validators/is-unique.decorato
 import { IdPipe } from './modules/core/transformers/id.pipe';
 import { ExistsConstraint } from './modules/core/validators/exists.decorator';
 import { JwtModule } from '@nestjs/jwt';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { JwtModule } from '@nestjs/jwt';
       isGlobal: true,
       load: [config],
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: process.env.DATABASE_TYPE as 'mysql' | 'postgres',
       host: process.env.DATABASE_HOST,
