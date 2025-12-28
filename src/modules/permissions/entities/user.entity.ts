@@ -35,4 +35,8 @@ export class User {
     const saltOrRounds = 10;
     this.password = bcrypt.hashSync(this.password, saltOrRounds);
   }
+
+  roles(): string[] {
+    return this.group.roles.map((role) => role.role);
+  }
 }

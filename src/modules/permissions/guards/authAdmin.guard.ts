@@ -30,8 +30,6 @@ export class AuthAdminGuard implements CanActivate {
         throw new UnauthorizedException();
       }
 
-      // 💡 We're assigning the payload to the request object here
-      // so that we can access it in our route handlers
       request['user'] = user;
     } catch {
       throw new UnauthorizedException();

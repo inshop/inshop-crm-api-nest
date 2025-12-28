@@ -9,14 +9,18 @@ import { GroupsService } from './services/groups.service';
 import { ModulesService } from './services/modules.service';
 import { RolesService } from './services/roles.service';
 import { UsersService } from './services/users.service';
+import { UserTokenService } from './services/user-token.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Group } from './entities/group.entity';
 import { Role } from './entities/role.entity';
 import { User } from './entities/user.entity';
 import { Module as ModuleEntity } from './entities/module.entity';
+import { UserToken } from './entities/user-token.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Group, ModuleEntity, Role, User])],
+  imports: [
+    TypeOrmModule.forFeature([Group, ModuleEntity, Role, User, UserToken]),
+  ],
   controllers: [
     AuthController,
     GroupsController,
@@ -30,6 +34,7 @@ import { Module as ModuleEntity } from './entities/module.entity';
     ModulesService,
     RolesService,
     UsersService,
+    UserTokenService,
   ],
 })
 export class PermissionsModule {}
