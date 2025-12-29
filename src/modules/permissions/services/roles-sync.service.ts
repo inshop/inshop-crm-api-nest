@@ -9,7 +9,7 @@ import {
   AppModuleName,
   ModulesRolesMap,
   allRoles,
-} from '../constants/modules-roles.map';
+} from '../constants/roles.constants';
 
 @Injectable()
 export class RolesSyncService {
