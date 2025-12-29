@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { RolesController } from './controllers/admin/roles.controller';
 import { AuthController } from './controllers/admin/auth.controller';
 import { GroupsController } from './controllers/admin/groups.controller';
@@ -19,6 +19,7 @@ import { UserToken } from './entities/user-token.entity';
 import { UserTokenCleanupService } from './services/user-token-cleanup.service';
 import { RolesGuard } from './guards/roles.guard';
 import { Reflector } from '@nestjs/core';
+import { RolesSyncService } from './services/roles-sync.service';
 
 @Module({
   imports: [
@@ -41,7 +42,18 @@ import { Reflector } from '@nestjs/core';
     UserTokenCleanupService,
     RolesGuard,
     Reflector,
+    RolesSyncService,
   ],
-  exports: [AuthService],
+  exports: [AuthService, RolesSyncService],
 })
-export class PermissionsModule {}
+export class PermissionsModule implements OnModuleInit {
+  constructor(private readonly rolesSyncService: RolesSyncService) {}
+
+  async onModuleInit() {
+    try {
+      await this.rolesSyncService.sync();
+    } catch (e) {
+      console.error('Error while syncing roles:', e);
+    }
+  }
+}
