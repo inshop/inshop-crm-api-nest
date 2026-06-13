@@ -29,7 +29,6 @@ export enum AppModuleName {
   CONTACTS = 'contacts',
   USERS = 'users',
   GROUPS = 'groups',
-  AUTH = 'auth',
 }
 
 export const ModulesRolesMap: Record<AppModuleName, AppRole[]> = {
@@ -61,7 +60,6 @@ export const ModulesRolesMap: Record<AppModuleName, AppRole[]> = {
     AppRole.GROUP_DETAILS,
     AppRole.GROUP_DELETE,
   ],
-  [AppModuleName.AUTH]: [],
 };
 
 export function allRoles(): AppRole[] {
