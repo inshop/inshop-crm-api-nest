@@ -1,5 +1,4 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { AdminRolesController } from './controllers/admin/admin-roles.controller';
 import { RolesController } from './controllers/admin/roles.controller';
 import { AuthController } from './controllers/admin/auth.controller';
 import { GroupsController } from './controllers/admin/groups.controller';
@@ -27,7 +26,6 @@ import { RolesSyncService } from './services/roles-sync.service';
     TypeOrmModule.forFeature([Group, ModuleEntity, Role, User, UserToken]),
   ],
   controllers: [
-    AdminRolesController,
     AuthController,
     GroupsController,
     ModulesController,

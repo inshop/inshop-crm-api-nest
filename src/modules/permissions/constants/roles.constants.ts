@@ -17,32 +17,18 @@ export enum AppRole {
   USER_DETAILS = 'ROLE_USER_DETAILS',
   USER_DELETE = 'ROLE_USER_DELETE',
 
-  MODULE_CREATE = 'ROLE_MODULE_CREATE',
-  MODULE_UPDATE = 'ROLE_MODULE_UPDATE',
-  MODULE_LIST = 'ROLE_MODULE_LIST',
-  MODULE_DETAILS = 'ROLE_MODULE_DETAILS',
-  MODULE_DELETE = 'ROLE_MODULE_DELETE',
-
   GROUP_CREATE = 'ROLE_GROUP_CREATE',
   GROUP_UPDATE = 'ROLE_GROUP_UPDATE',
   GROUP_LIST = 'ROLE_GROUP_LIST',
   GROUP_DETAILS = 'ROLE_GROUP_DETAILS',
   GROUP_DELETE = 'ROLE_GROUP_DELETE',
-
-  ROLE_CREATE = 'ROLE_ROLE_CREATE',
-  ROLE_UPDATE = 'ROLE_ROLE_UPDATE',
-  ROLE_LIST = 'ROLE_ROLE_LIST',
-  ROLE_DETAILS = 'ROLE_ROLE_DETAILS',
-  ROLE_DELETE = 'ROLE_ROLE_DELETE',
 }
 
 export enum AppModuleName {
   CLIENTS = 'clients',
   CONTACTS = 'contacts',
   USERS = 'users',
-  MODULES = 'modules',
   GROUPS = 'groups',
-  ROLES = 'roles',
   AUTH = 'auth',
 }
 
@@ -68,13 +54,6 @@ export const ModulesRolesMap: Record<AppModuleName, AppRole[]> = {
     AppRole.USER_DETAILS,
     AppRole.USER_DELETE,
   ],
-  [AppModuleName.MODULES]: [
-    AppRole.MODULE_CREATE,
-    AppRole.MODULE_UPDATE,
-    AppRole.MODULE_LIST,
-    AppRole.MODULE_DETAILS,
-    AppRole.MODULE_DELETE,
-  ],
   [AppModuleName.GROUPS]: [
     AppRole.GROUP_CREATE,
     AppRole.GROUP_UPDATE,
@@ -82,19 +61,8 @@ export const ModulesRolesMap: Record<AppModuleName, AppRole[]> = {
     AppRole.GROUP_DETAILS,
     AppRole.GROUP_DELETE,
   ],
-  [AppModuleName.ROLES]: [
-    AppRole.ROLE_CREATE,
-    AppRole.ROLE_UPDATE,
-    AppRole.ROLE_LIST,
-    AppRole.ROLE_DETAILS,
-    AppRole.ROLE_DELETE,
-  ],
   [AppModuleName.AUTH]: [],
 };
-
-export function getRolesForModule(moduleName: AppModuleName): AppRole[] {
-  return ModulesRolesMap[moduleName] || [];
-}
 
 export function allRoles(): AppRole[] {
   return Object.values(ModulesRolesMap).flat();
