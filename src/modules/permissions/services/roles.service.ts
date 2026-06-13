@@ -28,6 +28,14 @@ export class RolesService {
     return this.rolesRepository.findBy({ module: { id: moduleId } });
   }
 
+  findAllFlat(take: number, skip: number) {
+    return this.rolesRepository.findAndCount({
+      take,
+      skip,
+      order: { name: 'ASC' },
+    });
+  }
+
   findOne(moduleId: number, id: number) {
     return this.rolesRepository.findOne({
       where: { id, module: { id: moduleId } },
