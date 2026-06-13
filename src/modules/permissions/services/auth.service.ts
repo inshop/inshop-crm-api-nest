@@ -64,6 +64,7 @@ export class AuthService {
 
   public async verifyToken(
     token: string,
+    expectedType?: TokenType,
   ): Promise<{ verified: VerifiedToken; user: User }> {
     let verified: VerifiedToken;
 
@@ -71,18 +72,18 @@ export class AuthService {
       verified = await this.jwtService.verifyAsync<VerifiedToken>(token, {
         secret: config().jwtSecret,
       });
-    } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
+    } catch {
+      throw new UnauthorizedException('Invalid token');
     }
 
     const jti = verified.jti;
     if (!jti) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Invalid token');
     }
 
-    const isValid = await this.userTokenService.isTokenValid(jti);
+    const isValid = await this.userTokenService.isTokenValid(jti, expectedType);
     if (!isValid) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Invalid token');
     }
 
     const user = await this.usersRepository.findOne({
@@ -95,7 +96,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
     }
 
     return { verified, user };
@@ -115,6 +120,10 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
+    if (!user.isActive) {
+      throw new UnauthorizedException();
+    }
+
     if (!bcrypt.compareSync(loginAuthDto.password, user.password)) {
       throw new UnauthorizedException();
     }
@@ -128,6 +137,7 @@ export class AuthService {
   async refresh(refreshTokenDto: RefreshAuthDto): Promise<ResponseAuthDto> {
     const { verified, user } = await this.verifyToken(
       refreshTokenDto.refreshToken,
+      TokenType.REFRESH,
     );
 
     await this.userTokenService.invalidateToken(verified.jti);
@@ -141,6 +151,7 @@ export class AuthService {
   async logout(logoutAuthDto: LogoutAuthDto) {
     const { verified, user } = await this.verifyToken(
       logoutAuthDto.refreshToken,
+      TokenType.REFRESH,
     );
 
     await this.userTokenService.invalidateToken(verified.jti);

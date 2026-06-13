@@ -97,6 +97,13 @@ export class RolesSyncService {
     }
 
     const adminEmail = 'admin@admin.admin';
+
+    if (process.env.SEED_ADMIN === 'false') {
+      this.logger.log('Admin seeding disabled (SEED_ADMIN=false)');
+      this.logger.log('Roles/modules sync finished');
+      return;
+    }
+
     const adminUser = await this.usersRepository.findOne({
       where: { email: adminEmail },
       relations: { group: true },

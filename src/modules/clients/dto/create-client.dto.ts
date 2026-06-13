@@ -1,4 +1,4 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsString } from 'class-validator';
 import { IsUnique } from '../../core/validators/is-unique.decorator';
 import { Client } from '../entities/client.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -16,4 +16,8 @@ export class CreateClientDto {
   @IsString()
   @ApiProperty()
   password: string;
+
+  @IsBoolean()
+  @ApiProperty()
+  isActive: boolean;
 }

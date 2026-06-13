@@ -44,7 +44,7 @@ export class UserTokenService {
     await this.tokenRepository.save(entry);
   }
 
-  async isTokenValid(jti: string): Promise<boolean> {
+  async isTokenValid(jti: string, expectedType?: TokenType): Promise<boolean> {
     const entry = await this.tokenRepository.findOne({
       where: { jti },
     });
@@ -58,6 +58,10 @@ export class UserTokenService {
     }
 
     if (entry.expiresAt && entry.expiresAt <= new Date()) {
+      return false;
+    }
+
+    if (expectedType && entry.type !== expectedType) {
       return false;
     }
 

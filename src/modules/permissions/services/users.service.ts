@@ -37,8 +37,14 @@ export class UsersService {
     });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return this.usersRepository.update(id, updateUserDto);
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.usersRepository.findOneByOrFail({ id });
+    const { password, id: _id, ...rest } = updateUserDto;
+    Object.assign(user, rest);
+    if (password) {
+      user.password = password;
+    }
+    return this.usersRepository.save(user);
   }
 
   remove(id: number) {

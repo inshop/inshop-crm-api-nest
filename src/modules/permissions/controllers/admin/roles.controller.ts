@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  ValidationPipe,
   NotFoundException,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +13,7 @@ import { RolesService } from '../../services/roles.service';
 import { CreateRoleDto } from '../../dto/create-role.dto';
 import { UpdateRoleDto } from '../../dto/update-role.dto';
 import { IdPipe } from '../../../core/transformers/id.pipe';
+import { BodyValidationPipe } from '../../../core/pipes/body-validation.pipe';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { Role } from '../../entities/role.entity';
 import { Module } from '../../entities/module.entity';
@@ -31,7 +31,7 @@ export class RolesController {
   @Roles(AppRole.ROLE_CREATE)
   create(
     @Param('moduleId', ObjectPipe(Module)) module: Module,
-    @Body(ValidationPipe) createRoleDto: CreateRoleDto,
+    @Body(BodyValidationPipe) createRoleDto: CreateRoleDto,
   ) {
     return this.rolesService.create(module.id, createRoleDto);
   }
@@ -60,7 +60,7 @@ export class RolesController {
   async update(
     @Param('moduleId', ObjectPipe(Module)) module: Module,
     @Param('id', ObjectPipe(Role, ['module'])) role: Role,
-    @Body(IdPipe, ValidationPipe) updateRoleDto: UpdateRoleDto,
+    @Body(IdPipe, BodyValidationPipe) updateRoleDto: UpdateRoleDto,
   ) {
     if (role.module.id !== module.id) {
       throw new NotFoundException('Role not found');

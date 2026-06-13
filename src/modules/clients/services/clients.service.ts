@@ -34,8 +34,14 @@ export class ClientsService {
     });
   }
 
-  update(id: number, updateClientDto: UpdateClientDto) {
-    return this.clientsRepository.update(id, updateClientDto);
+  async update(id: number, updateClientDto: UpdateClientDto) {
+    const client = await this.clientsRepository.findOneByOrFail({ id });
+    const { password, id: _id, ...rest } = updateClientDto;
+    Object.assign(client, rest);
+    if (password) {
+      client.password = password;
+    }
+    return this.clientsRepository.save(client);
   }
 
   remove(id: number) {

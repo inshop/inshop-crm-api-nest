@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  ValidationPipe,
   DefaultValuePipe,
   ParseIntPipe,
   UseGuards,
@@ -16,6 +15,7 @@ import { GroupsService } from '../../services/groups.service';
 import { CreateGroupDto } from '../../dto/create-group.dto';
 import { UpdateGroupDto } from '../../dto/update-group.dto';
 import { IdPipe } from '../../../core/transformers/id.pipe';
+import { BodyValidationPipe } from '../../../core/pipes/body-validation.pipe';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { Group } from '../../entities/group.entity';
 import { TokenGuard } from '../../guards/token.guard';
@@ -30,7 +30,7 @@ export class GroupsController {
 
   @Post()
   @Roles(AppRole.GROUP_CREATE)
-  create(@Body(ValidationPipe) createGroupDto: CreateGroupDto) {
+  create(@Body(BodyValidationPipe) createGroupDto: CreateGroupDto) {
     return this.groupsService.create(createGroupDto);
   }
 
@@ -53,7 +53,7 @@ export class GroupsController {
   @Roles(AppRole.GROUP_UPDATE)
   async update(
     @Param('id', ObjectPipe(Group)) group: Group,
-    @Body(IdPipe, ValidationPipe) updateGroupDto: UpdateGroupDto,
+    @Body(IdPipe, BodyValidationPipe) updateGroupDto: UpdateGroupDto,
   ) {
     await this.groupsService.update(group.id, updateGroupDto);
 

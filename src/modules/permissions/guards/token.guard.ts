@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
+import { TokenType } from '../entities/user-token.entity';
 import { Request } from 'express';
 
 @Injectable()
@@ -19,7 +20,10 @@ export class TokenGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const { user } = await this.authService.verifyToken(token);
+    const { user } = await this.authService.verifyToken(
+      token,
+      TokenType.ACCESS,
+    );
     request['user'] = user;
 
     return true;

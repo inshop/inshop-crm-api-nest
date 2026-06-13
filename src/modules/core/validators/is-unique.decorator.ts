@@ -4,7 +4,6 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
   ValidationArguments,
-  validateSync,
 } from 'class-validator';
 import { Injectable, Type } from '@nestjs/common';
 import { DataSource, Not } from 'typeorm';
@@ -19,37 +18,31 @@ export class IsUniqueConstraint implements ValidatorConstraintInterface {
     private readonly dataSource: DataSource,
   ) {}
 
-  async validate(_value: unknown, args: ValidationArguments): Promise<boolean> {
+  async validate(value: unknown, args: ValidationArguments): Promise<boolean> {
+    if (!value) {
+      return true;
+    }
+
     const [entity, properties] = args.constraints as [Type<any>, string[]];
     const object = args.object as EntityType;
     const repository = this.dataSource.getRepository(entity);
 
-    // Run synchronous validation for the object
-    const validationErrors = validateSync(object, {
-      skipMissingProperties: true,
-    });
-
-    if (validationErrors.length > 0) {
-      // Skip uniqueness check if other validations fail
-      return false;
-    }
-
-    const where: { [key: string]: unknown } = {};
-    properties.forEach((property) => {
+    const where: Record<string, unknown> = {};
+    for (const property of properties) {
       where[property] = object[property];
-    });
+    }
 
     if (object.id) {
-      where.id = Not(object.id);
+      where.id = Not(+object.id);
     }
 
-    const record: unknown = await repository.findOne({ where });
+    const record = await repository.findOne({ where });
 
     return !record;
   }
 
-  defaultMessage(validationArguments: ValidationArguments): string {
-    const [properties] = validationArguments.constraints as [string[]];
+  defaultMessage(args: ValidationArguments): string {
+    const [, properties] = args.constraints as [Type<any>, string[]];
 
     return `${properties.join(', ')} must be unique.`;
   }

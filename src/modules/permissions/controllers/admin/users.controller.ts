@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  ValidationPipe,
   DefaultValuePipe,
   ParseIntPipe,
   UseGuards,
@@ -16,6 +15,7 @@ import { UsersService } from '../../services/users.service';
 import { CreateUserDto } from '../../dto/create-user.dto';
 import { UpdateUserDto } from '../../dto/update-user.dto';
 import { IdPipe } from '../../../core/transformers/id.pipe';
+import { BodyValidationPipe } from '../../../core/pipes/body-validation.pipe';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { User } from '../../entities/user.entity';
 import { TokenGuard } from '../../guards/token.guard';
@@ -30,7 +30,7 @@ export class UsersController {
 
   @Post()
   @Roles(AppRole.USER_CREATE)
-  create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
+  create(@Body(BodyValidationPipe) createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
@@ -53,7 +53,7 @@ export class UsersController {
   @Roles(AppRole.USER_UPDATE)
   async update(
     @Param('id', ObjectPipe(User)) user: User,
-    @Body(IdPipe, ValidationPipe) updateUserDto: UpdateUserDto,
+    @Body(IdPipe, BodyValidationPipe) updateUserDto: UpdateUserDto,
   ) {
     await this.usersService.update(user.id, updateUserDto);
 

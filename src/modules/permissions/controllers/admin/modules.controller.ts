@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  ValidationPipe,
   DefaultValuePipe,
   ParseIntPipe,
   UseGuards,
@@ -16,6 +15,7 @@ import { ModulesService } from '../../services/modules.service';
 import { CreateModuleDto } from '../../dto/create-module.dto';
 import { UpdateModuleDto } from '../../dto/update-module.dto';
 import { IdPipe } from '../../../core/transformers/id.pipe';
+import { BodyValidationPipe } from '../../../core/pipes/body-validation.pipe';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { Module as ModuleEntity } from '../../../permissions/entities/module.entity';
 import { TokenGuard } from '../../guards/token.guard';
@@ -30,7 +30,7 @@ export class ModulesController {
 
   @Post()
   @Roles(AppRole.MODULE_CREATE)
-  create(@Body(ValidationPipe) createModuleDto: CreateModuleDto) {
+  create(@Body(BodyValidationPipe) createModuleDto: CreateModuleDto) {
     return this.modulesService.create(createModuleDto);
   }
 
@@ -55,7 +55,7 @@ export class ModulesController {
   @Roles(AppRole.MODULE_UPDATE)
   async update(
     @Param('id', ObjectPipe(ModuleEntity)) module: ModuleEntity,
-    @Body(IdPipe, ValidationPipe) updateModuleDto: UpdateModuleDto,
+    @Body(IdPipe, BodyValidationPipe) updateModuleDto: UpdateModuleDto,
   ) {
     await this.modulesService.update(module.id, updateModuleDto);
 

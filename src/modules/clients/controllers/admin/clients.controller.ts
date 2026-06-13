@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  ValidationPipe,
   ParseIntPipe,
   DefaultValuePipe,
   UseGuards,
@@ -16,6 +15,7 @@ import { ClientsService } from '../../services/clients.service';
 import { CreateClientDto } from '../../dto/create-client.dto';
 import { UpdateClientDto } from '../../dto/update-client.dto';
 import { IdPipe } from '../../../core/transformers/id.pipe';
+import { BodyValidationPipe } from '../../../core/pipes/body-validation.pipe';
 import { Client } from '../../entities/client.entity';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { TokenGuard } from '../../../permissions/guards/token.guard';
@@ -30,7 +30,7 @@ export class ClientsController {
 
   @Post()
   @Roles(AppRole.CLIENT_CREATE)
-  create(@Body(ValidationPipe) createClientDto: CreateClientDto) {
+  create(@Body(BodyValidationPipe) createClientDto: CreateClientDto) {
     return this.clientsService.create(createClientDto);
   }
 
@@ -53,7 +53,7 @@ export class ClientsController {
   @Roles(AppRole.CLIENT_UPDATE)
   async update(
     @Param('id', ObjectPipe(Client)) client: Client,
-    @Body(IdPipe, ValidationPipe) updateClientDto: UpdateClientDto,
+    @Body(IdPipe, BodyValidationPipe) updateClientDto: UpdateClientDto,
   ) {
     await this.clientsService.update(client.id, updateClientDto);
 

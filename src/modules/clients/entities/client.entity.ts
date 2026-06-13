@@ -1,5 +1,6 @@
 import {
   BeforeInsert,
+  BeforeUpdate,
   Column,
   Entity,
   OneToMany,
@@ -31,8 +32,10 @@ export class Client {
   contacts: Contact[];
 
   @BeforeInsert()
+  @BeforeUpdate()
   generatePasswordHash(): void {
-    const saltOrRounds = 10;
-    this.password = bcrypt.hashSync(this.password, saltOrRounds);
+    if (this.password && !this.password.startsWith('$2b$')) {
+      this.password = bcrypt.hashSync(this.password, 10);
+    }
   }
 }
