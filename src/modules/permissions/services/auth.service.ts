@@ -148,6 +148,12 @@ export class AuthService {
     return { token, refreshToken };
   }
 
+  async changePassword(userId: number, password: string): Promise<void> {
+    const user = await this.usersRepository.findOneByOrFail({ id: userId });
+    user.password = password;
+    await this.usersRepository.save(user);
+  }
+
   async logout(logoutAuthDto: LogoutAuthDto) {
     const { verified, user } = await this.verifyToken(
       logoutAuthDto.refreshToken,

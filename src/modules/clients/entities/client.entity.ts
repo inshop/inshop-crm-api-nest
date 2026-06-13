@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Contact } from './contact.entity';
 import { Exclude } from 'class-transformer';
-import * as bcrypt from 'bcrypt';
+import { hashPassword, isBcryptHash } from '../../core/utils/password';
 
 @Entity()
 export class Client {
@@ -34,8 +34,8 @@ export class Client {
   @BeforeInsert()
   @BeforeUpdate()
   generatePasswordHash(): void {
-    if (this.password && !this.password.startsWith('$2b$')) {
-      this.password = bcrypt.hashSync(this.password, 10);
+    if (this.password && !isBcryptHash(this.password)) {
+      this.password = hashPassword(this.password);
     }
   }
 }
