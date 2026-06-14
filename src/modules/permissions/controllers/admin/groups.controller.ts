@@ -16,6 +16,7 @@ import { CreateGroupDto } from '../../dto/create-group.dto';
 import { UpdateGroupDto } from '../../dto/update-group.dto';
 import { IdPipe } from '../../../core/transformers/id.pipe';
 import { BodyValidationPipe } from '../../../core/pipes/body-validation.pipe';
+import { ParseFilterPipe } from '../../../core/pipes/parse-filter.pipe';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { Group } from '../../entities/group.entity';
 import { TokenGuard } from '../../guards/token.guard';
@@ -39,8 +40,9 @@ export class GroupsController {
   findAll(
     @Query('take', new DefaultValuePipe(30), new ParseIntPipe()) take: number,
     @Query('skip', new DefaultValuePipe(0), new ParseIntPipe()) skip: number,
+    @Query('filter', ParseFilterPipe) filter?: Record<string, string>,
   ) {
-    return this.groupsService.findAll(take, skip);
+    return this.groupsService.findAll(take, skip, filter);
   }
 
   @Get(':id')

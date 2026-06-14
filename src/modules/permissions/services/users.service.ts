@@ -4,6 +4,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import { buildListWhere } from '../../core/utils/list-filters';
 
 @Injectable()
 export class UsersService {
@@ -18,10 +19,20 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  findAll(take: number, skip: number) {
+  findAll(take: number, skip: number, filter?: Record<string, string>) {
     return this.usersRepository.findAndCount({
       take,
       skip,
+      where: buildListWhere<User>(
+        filter,
+        {
+          id: 'number',
+          name: 'string',
+          email: 'string',
+          isActive: 'boolean',
+        },
+        { group: { name: 'string' } },
+      ),
       relations: {
         group: true,
       },

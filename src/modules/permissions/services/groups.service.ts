@@ -4,6 +4,7 @@ import { UpdateGroupDto } from '../dto/update-group.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Group } from '../entities/group.entity';
+import { buildListWhere } from '../../core/utils/list-filters';
 
 @Injectable()
 export class GroupsService {
@@ -18,13 +19,14 @@ export class GroupsService {
     return this.groupsRepository.save(group);
   }
 
-  findAll(take: number, skip: number) {
+  findAll(take: number, skip: number, filter?: Record<string, string>) {
     return this.groupsRepository.findAndCount({
       take,
       skip,
-      // relations: {
-      //   roles: true,
-      // },
+      where: buildListWhere<Group>(filter, {
+        id: 'number',
+        name: 'string',
+      }),
     });
   }
 

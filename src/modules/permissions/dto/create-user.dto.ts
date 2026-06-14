@@ -1,6 +1,7 @@
 import { Group } from '../entities/group.entity';
 import { IsBoolean, IsEmail, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsUnique } from '../../core/validators/is-unique.decorator';
 import { User } from '../entities/user.entity';
 import { Exists } from '../../core/validators/exists.decorator';
@@ -20,6 +21,9 @@ export class CreateUserDto {
   password: string;
 
   @Exists(Group, { message: 'Group not exists' })
+  @Transform(({ value }) =>
+    typeof value === 'number' ? { id: value } : value,
+  )
   @ApiProperty()
   group: Group;
 

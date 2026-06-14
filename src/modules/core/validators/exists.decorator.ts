@@ -32,8 +32,13 @@ export class ExistsConstraint implements ValidatorConstraintInterface {
     let exists = true;
 
     for (const item of value) {
+      const id =
+        typeof item === 'object' && item !== null && 'id' in item
+          ? item.id
+          : item;
+
       const record: unknown = await repository.findOne({
-        where: { id: item.id },
+        where: { id },
       });
 
       if (!record) {

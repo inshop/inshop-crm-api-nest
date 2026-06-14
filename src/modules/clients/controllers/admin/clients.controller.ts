@@ -16,6 +16,7 @@ import { CreateClientDto } from '../../dto/create-client.dto';
 import { UpdateClientDto } from '../../dto/update-client.dto';
 import { IdPipe } from '../../../core/transformers/id.pipe';
 import { BodyValidationPipe } from '../../../core/pipes/body-validation.pipe';
+import { ParseFilterPipe } from '../../../core/pipes/parse-filter.pipe';
 import { Client } from '../../entities/client.entity';
 import { ObjectPipe } from '../../../core/transformers/parse-object.pipe';
 import { TokenGuard } from '../../../permissions/guards/token.guard';
@@ -39,8 +40,9 @@ export class ClientsController {
   async findAll(
     @Query('take', new DefaultValuePipe(30), new ParseIntPipe()) take: number,
     @Query('skip', new DefaultValuePipe(0), new ParseIntPipe()) skip: number,
+    @Query('filter', ParseFilterPipe) filter?: Record<string, string>,
   ) {
-    return this.clientsService.findAll(take, skip);
+    return this.clientsService.findAll(take, skip, filter);
   }
 
   @Get(':id')
