@@ -67,5 +67,18 @@ export function computeAuditDiff(
     }
   }
 
+  for (const key of SENSITIVE_KEYS) {
+    const oldVal = before[key];
+    const newVal = after[key];
+
+    if (
+      oldVal !== undefined &&
+      newVal !== undefined &&
+      oldVal !== newVal
+    ) {
+      diff[key] = { old: '********', new: 'Changed' };
+    }
+  }
+
   return diff;
 }
