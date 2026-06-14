@@ -12,6 +12,7 @@ import { ResponseAuthDto } from '../dto/response/response-auth.dto';
 import { RefreshAuthDto } from '../dto/refresh-auth.dto';
 import { LogoutAuthDto } from '../dto/logout-auth.dto';
 import config from '../../../config/config';
+import { AuditService, AuditMetadata } from '../../audit/services/audit.service';
 
 type UserJwtPayload = {
   id: number;
@@ -33,6 +34,7 @@ export class AuthService {
     private usersRepository: Repository<User>,
     private jwtService: JwtService,
     private userTokenService: UserTokenService,
+    private auditService: AuditService,
   ) {}
 
   private async issueToken(user: User, type: TokenType): Promise<string> {
@@ -106,7 +108,10 @@ export class AuthService {
     return { verified, user };
   }
 
-  async login(loginAuthDto: LoginAuthDto): Promise<ResponseAuthDto> {
+  async login(
+    loginAuthDto: LoginAuthDto,
+    metadata?: AuditMetadata,
+  ): Promise<ResponseAuthDto> {
     const user = await this.usersRepository.findOne({
       where: { email: loginAuthDto.email },
       relations: {
@@ -131,6 +136,8 @@ export class AuthService {
     const token = await this.issueToken(user, TokenType.ACCESS);
     const refreshToken = await this.issueToken(user, TokenType.REFRESH);
 
+    await this.auditService.logLogin(user, metadata);
+
     return { token, refreshToken };
   }
 
@@ -154,7 +161,7 @@ export class AuthService {
     await this.usersRepository.save(user);
   }
 
-  async logout(logoutAuthDto: LogoutAuthDto) {
+  async logout(logoutAuthDto: LogoutAuthDto, metadata?: AuditMetadata) {
     const { verified, user } = await this.verifyToken(
       logoutAuthDto.refreshToken,
       TokenType.REFRESH,
@@ -166,6 +173,8 @@ export class AuthService {
     for (const accessToken of accessTokens) {
       await this.userTokenService.invalidateToken(accessToken.jti);
     }
+
+    await this.auditService.logLogout(user, metadata);
 
     return {
       message: 'Successfully logged out',

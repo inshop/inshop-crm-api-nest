@@ -22,6 +22,9 @@ export enum AppRole {
   GROUP_LIST = 'ROLE_GROUP_LIST',
   GROUP_DETAILS = 'ROLE_GROUP_DETAILS',
   GROUP_DELETE = 'ROLE_GROUP_DELETE',
+
+  AUDIT_LIST = 'ROLE_AUDIT_LIST',
+  AUDIT_DETAILS = 'ROLE_AUDIT_DETAILS',
 }
 
 export enum AppModuleName {
@@ -29,6 +32,7 @@ export enum AppModuleName {
   CONTACTS = 'contacts',
   USERS = 'users',
   GROUPS = 'groups',
+  AUDIT = 'audit',
 }
 
 export const ModulesRolesMap: Record<AppModuleName, AppRole[]> = {
@@ -59,6 +63,10 @@ export const ModulesRolesMap: Record<AppModuleName, AppRole[]> = {
     AppRole.GROUP_LIST,
     AppRole.GROUP_DETAILS,
     AppRole.GROUP_DELETE,
+  ],
+  [AppModuleName.AUDIT]: [
+    AppRole.AUDIT_LIST,
+    AppRole.AUDIT_DETAILS,
   ],
 };
 

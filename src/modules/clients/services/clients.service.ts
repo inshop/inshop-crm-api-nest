@@ -5,24 +5,37 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from '../entities/client.entity';
 import { Repository } from 'typeorm';
 import { buildListWhere } from '../../core/utils/list-filters';
+import { AuditService } from '../../audit/services/audit.service';
+import { AuditEntityType } from '../../audit/constants/audit.constants';
+import { User } from '../../permissions/entities/user.entity';
 
 @Injectable()
 export class ClientsService {
   constructor(
     @InjectRepository(Client)
     private clientsRepository: Repository<Client>,
+    private auditService: AuditService,
   ) {}
 
-  async create(createClientDto: CreateClientDto): Promise<Client> {
+  async create(createClientDto: CreateClientDto, actor?: User) {
     const client = this.clientsRepository.create(createClientDto);
+    const saved = await this.clientsRepository.save(client);
 
-    return this.clientsRepository.save(client);
+    await this.auditService.logCreateIf(
+      actor,
+      AuditEntityType.CLIENT,
+      saved.id,
+      saved as unknown as Record<string, unknown>,
+    );
+
+    return saved;
   }
 
   findAll(take: number, skip: number, filter?: Record<string, string>) {
     return this.clientsRepository.findAndCount({
       take,
       skip,
+      order: { id: 'DESC' },
       where: buildListWhere<Client>(filter, {
         id: 'number',
         name: 'string',
@@ -41,17 +54,37 @@ export class ClientsService {
     });
   }
 
-  async update(id: number, updateClientDto: UpdateClientDto) {
+  async update(id: number, updateClientDto: UpdateClientDto, actor?: User) {
     const client = await this.clientsRepository.findOneByOrFail({ id });
+    const before = { ...client } as unknown as Record<string, unknown>;
     const { password, id: _id, ...rest } = updateClientDto;
     Object.assign(client, rest);
     if (password) {
       client.password = password;
     }
-    return this.clientsRepository.save(client);
+    const saved = await this.clientsRepository.save(client);
+
+    await this.auditService.logUpdateIf(
+      actor,
+      AuditEntityType.CLIENT,
+      id,
+      before,
+      saved as unknown as Record<string, unknown>,
+    );
+
+    return saved;
   }
 
-  remove(id: number) {
+  async remove(id: number, actor?: User) {
+    const client = await this.clientsRepository.findOneBy({ id });
+
+    await this.auditService.logDeleteIf(
+      actor,
+      AuditEntityType.CLIENT,
+      id,
+      client as unknown as Record<string, unknown>,
+    );
+
     return this.clientsRepository.delete(id);
   }
 }

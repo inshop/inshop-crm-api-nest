@@ -10,6 +10,13 @@ import { TokenGuard } from '../../guards/token.guard';
 import { User } from '../../entities/user.entity';
 import { Request } from 'express';
 
+function getAuthMetadata(req: Request) {
+  return {
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+  };
+}
+
 @Controller('admin/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -17,8 +24,9 @@ export class AuthController {
   @Post('/login')
   login(
     @Body(BodyValidationPipe) loginAuthDto: LoginAuthDto,
+    @Req() req: Request,
   ): Promise<ResponseAuthDto> {
-    return this.authService.login(loginAuthDto);
+    return this.authService.login(loginAuthDto, getAuthMetadata(req));
   }
 
   @Post('/refresh')
@@ -29,8 +37,11 @@ export class AuthController {
   }
 
   @Post('/logout')
-  logout(@Body(BodyValidationPipe) logoutAuthDto: LogoutAuthDto) {
-    return this.authService.logout(logoutAuthDto);
+  logout(
+    @Body(BodyValidationPipe) logoutAuthDto: LogoutAuthDto,
+    @Req() req: Request,
+  ) {
+    return this.authService.logout(logoutAuthDto, getAuthMetadata(req));
   }
 
   @UseGuards(TokenGuard)

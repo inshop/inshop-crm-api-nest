@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import config from './config/config';
 import { ClientsModule } from './modules/clients/clients.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as process from 'node:process';
 import { IsUniqueConstraint } from './modules/core/validators/is-unique.decorator';
@@ -12,6 +13,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    AuditModule,
     ClientsModule,
     PermissionsModule,
     ConfigModule.forRoot({

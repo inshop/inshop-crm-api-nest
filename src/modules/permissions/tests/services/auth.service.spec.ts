@@ -10,6 +10,7 @@ import { Group } from '../../entities/group.entity';
 import { Role } from '../../entities/role.entity';
 import { TokenType } from '../../entities/user-token.entity';
 import { AppRole } from '../../constants/roles.constants';
+import { AuditService } from '../../../audit/services/audit.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -63,6 +64,10 @@ describe('AuthService', () => {
       invalidateToken: jest.fn().mockResolvedValue(undefined),
       getAccessTokens: jest.fn().mockResolvedValue([]),
     };
+    const auditService = {
+      logLogin: jest.fn().mockResolvedValue(undefined),
+      logLogout: jest.fn().mockResolvedValue(undefined),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -70,6 +75,7 @@ describe('AuthService', () => {
         { provide: getRepositoryToken(User), useValue: usersRepository },
         { provide: JwtService, useValue: jwtService },
         { provide: UserTokenService, useValue: userTokenService },
+        { provide: AuditService, useValue: auditService },
       ],
     }).compile();
 

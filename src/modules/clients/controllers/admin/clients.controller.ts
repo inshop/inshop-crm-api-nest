@@ -10,6 +10,7 @@ import {
   DefaultValuePipe,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ClientsService } from '../../services/clients.service';
 import { CreateClientDto } from '../../dto/create-client.dto';
@@ -23,6 +24,8 @@ import { TokenGuard } from '../../../permissions/guards/token.guard';
 import { Roles } from '../../../permissions/decorators/roles.decorator';
 import { RolesGuard } from '../../../permissions/guards/roles.guard';
 import { AppRole } from '../../../permissions/constants/roles.constants';
+import { User } from '../../../permissions/entities/user.entity';
+import { Request } from 'express';
 
 @UseGuards(TokenGuard, RolesGuard)
 @Controller('admin/clients')
@@ -31,8 +34,11 @@ export class ClientsController {
 
   @Post()
   @Roles(AppRole.CLIENT_CREATE)
-  create(@Body(BodyValidationPipe) createClientDto: CreateClientDto) {
-    return this.clientsService.create(createClientDto);
+  create(
+    @Req() req: Request & { user: User },
+    @Body(BodyValidationPipe) createClientDto: CreateClientDto,
+  ) {
+    return this.clientsService.create(createClientDto, req.user);
   }
 
   @Get()
@@ -54,18 +60,22 @@ export class ClientsController {
   @Patch(':id')
   @Roles(AppRole.CLIENT_UPDATE)
   async update(
+    @Req() req: Request & { user: User },
     @Param('id', ObjectPipe(Client)) client: Client,
     @Body(IdPipe, BodyValidationPipe) updateClientDto: UpdateClientDto,
   ) {
-    await this.clientsService.update(client.id, updateClientDto);
+    await this.clientsService.update(client.id, updateClientDto, req.user);
 
     return;
   }
 
   @Delete(':id')
   @Roles(AppRole.CLIENT_DELETE)
-  async remove(@Param('id', ObjectPipe(Client)) client: Client) {
-    await this.clientsService.remove(client.id);
+  async remove(
+    @Req() req: Request & { user: User },
+    @Param('id', ObjectPipe(Client)) client: Client,
+  ) {
+    await this.clientsService.remove(client.id, req.user);
 
     return;
   }

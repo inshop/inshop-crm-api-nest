@@ -1,4 +1,5 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Module, OnModuleInit } from '@nestjs/common';
+import { AuditModule } from '../audit/audit.module';
 import { RolesController } from './controllers/admin/roles.controller';
 import { AuthController } from './controllers/admin/auth.controller';
 import { GroupsController } from './controllers/admin/groups.controller';
@@ -24,6 +25,7 @@ import { RolesSyncService } from './services/roles-sync.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Group, ModuleEntity, Role, User, UserToken]),
+    forwardRef(() => AuditModule),
   ],
   controllers: [
     AuthController,

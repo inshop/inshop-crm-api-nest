@@ -11,6 +11,9 @@ export class RolesService {
   ) {}
 
   findAll(moduleId: number) {
-    return this.rolesRepository.findBy({ module: { id: moduleId } });
+    return this.rolesRepository.find({
+      where: { module: { id: moduleId } },
+      order: { id: 'DESC' },
+    });
   }
 }

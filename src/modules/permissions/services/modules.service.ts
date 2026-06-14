@@ -14,6 +14,7 @@ export class ModulesService {
     return this.modulesRepository.findAndCount({
       take,
       skip,
+      order: { id: 'DESC' },
     });
   }
 }

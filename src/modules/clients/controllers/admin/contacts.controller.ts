@@ -8,6 +8,7 @@ import {
   Delete,
   NotFoundException,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ContactsService } from '../../services/contacts.service';
 import { CreateContactDto } from '../../dto/create-contact.dto';
@@ -21,6 +22,8 @@ import { TokenGuard } from '../../../permissions/guards/token.guard';
 import { Roles } from '../../../permissions/decorators/roles.decorator';
 import { RolesGuard } from '../../../permissions/guards/roles.guard';
 import { AppRole } from '../../../permissions/constants/roles.constants';
+import { User } from '../../../permissions/entities/user.entity';
+import { Request } from 'express';
 
 @UseGuards(TokenGuard, RolesGuard)
 @Controller('admin/clients/:clientId/contacts')
@@ -30,10 +33,11 @@ export class ContactsController {
   @Post()
   @Roles(AppRole.CONTACT_CREATE)
   create(
+    @Req() req: Request & { user: User },
     @Param('clientId', ObjectPipe(Client)) client: Client,
     @Body(BodyValidationPipe) createContactDto: CreateContactDto,
   ) {
-    return this.contactsService.create(client.id, createContactDto);
+    return this.contactsService.create(client.id, createContactDto, req.user);
   }
 
   @Get()
@@ -58,6 +62,7 @@ export class ContactsController {
   @Patch(':id')
   @Roles(AppRole.CONTACT_UPDATE)
   async update(
+    @Req() req: Request & { user: User },
     @Param('clientId', ObjectPipe(Client)) client: Client,
     @Param('id', ObjectPipe(Contact, ['client'])) contact: Contact,
     @Body(IdPipe, BodyValidationPipe) updateContactDto: UpdateContactDto,
@@ -66,7 +71,7 @@ export class ContactsController {
       throw new NotFoundException('Contact not found');
     }
 
-    await this.contactsService.update(contact.id, updateContactDto);
+    await this.contactsService.update(contact.id, updateContactDto, req.user);
 
     return;
   }
@@ -74,6 +79,7 @@ export class ContactsController {
   @Delete(':id')
   @Roles(AppRole.CONTACT_DELETE)
   async remove(
+    @Req() req: Request & { user: User },
     @Param('clientId', ObjectPipe(Client)) client: Client,
     @Param('id', ObjectPipe(Contact, ['client'])) contact: Contact,
   ) {
@@ -81,7 +87,7 @@ export class ContactsController {
       throw new NotFoundException('Contact not found');
     }
 
-    await this.contactsService.remove(contact.id);
+    await this.contactsService.remove(contact.id, req.user);
 
     return;
   }

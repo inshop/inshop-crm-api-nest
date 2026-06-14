@@ -10,6 +10,7 @@ import {
   ParseIntPipe,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from '../../services/users.service';
 import { CreateUserDto } from '../../dto/create-user.dto';
@@ -23,6 +24,7 @@ import { TokenGuard } from '../../guards/token.guard';
 import { Roles } from '../../decorators/roles.decorator';
 import { RolesGuard } from '../../guards/roles.guard';
 import { AppRole } from '../../constants/roles.constants';
+import { Request } from 'express';
 
 @UseGuards(TokenGuard, RolesGuard)
 @Controller('admin/users')
@@ -31,8 +33,11 @@ export class UsersController {
 
   @Post()
   @Roles(AppRole.USER_CREATE)
-  create(@Body(BodyValidationPipe) createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(
+    @Req() req: Request & { user: User },
+    @Body(BodyValidationPipe) createUserDto: CreateUserDto,
+  ) {
+    return this.usersService.create(createUserDto, req.user);
   }
 
   @Get()
@@ -54,18 +59,22 @@ export class UsersController {
   @Patch(':id')
   @Roles(AppRole.USER_UPDATE)
   async update(
+    @Req() req: Request & { user: User },
     @Param('id', ObjectPipe(User)) user: User,
     @Body(IdPipe, BodyValidationPipe) updateUserDto: UpdateUserDto,
   ) {
-    await this.usersService.update(user.id, updateUserDto);
+    await this.usersService.update(user.id, updateUserDto, req.user);
 
     return;
   }
 
   @Delete(':id')
   @Roles(AppRole.USER_DELETE)
-  async remove(@Param('id', ObjectPipe(User)) user: User) {
-    await this.usersService.remove(user.id);
+  async remove(
+    @Req() req: Request & { user: User },
+    @Param('id', ObjectPipe(User)) user: User,
+  ) {
+    await this.usersService.remove(user.id, req.user);
 
     return;
   }
