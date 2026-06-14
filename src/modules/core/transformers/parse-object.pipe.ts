@@ -8,9 +8,14 @@ export const ObjectPipe = (entity: any, relations?: string[]) => {
     constructor(@InjectDataSource() public readonly dataSource: DataSource) {}
 
     async transform(id: string): Promise<any> {
+      const relationsOption = relations?.reduce(
+        (acc, relation) => ({ ...acc, [relation]: true }),
+        {} as Record<string, boolean>,
+      );
+
       const row = await this.dataSource.getRepository(entity).findOne({
         where: { id },
-        relations,
+        ...(relationsOption ? { relations: relationsOption } : {}),
       });
 
       if (!row) {
