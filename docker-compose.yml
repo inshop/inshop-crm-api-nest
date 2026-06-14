@@ -10,5 +10,17 @@ services:
     ports:
       - ${DATABASE_PORT}:5432
 
+  db-test:
+    image: postgres
+    environment:
+      - POSTGRES_DB=${DATABASE_TEST_NAME:-api_test}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+    volumes:
+      - db-test-data:/var/lib/postgresql/data:rw
+    ports:
+      - ${DATABASE_TEST_PORT:-5433}:5432
+
 volumes:
   db-data: {}
+  db-test-data: {}
