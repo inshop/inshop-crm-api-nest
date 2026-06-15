@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Req, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { AuthService } from '../../services/auth.service';
 import { LoginAuthDto } from '../../dto/login-auth.dto';
 import { ResponseAuthDto } from '../../dto/response/response-auth.dto';
@@ -10,10 +18,17 @@ import { TokenGuard } from '../../guards/token.guard';
 import { User } from '../../entities/user.entity';
 import { Request } from 'express';
 
-function getAuthMetadata(req: Request) {
+function getHeader(req: Request, name: string): string | undefined {
+  const value = req.headers[name];
+  if (!value) return undefined;
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw.split(',')[0].trim();
+}
+
+function getAuthMetadata(req: Request, clientIp?: string) {
   return {
-    ip: req.ip,
-    userAgent: req.headers['user-agent'],
+    ip: clientIp ?? req.ip,
+    userAgent: getHeader(req, 'user-agent'),
   };
 }
 
@@ -26,7 +41,10 @@ export class AuthController {
     @Body(BodyValidationPipe) loginAuthDto: LoginAuthDto,
     @Req() req: Request,
   ): Promise<ResponseAuthDto> {
-    return this.authService.login(loginAuthDto, getAuthMetadata(req));
+    return this.authService.login(
+      loginAuthDto,
+      getAuthMetadata(req, loginAuthDto.clientIp),
+    );
   }
 
   @Post('/refresh')
@@ -41,7 +59,10 @@ export class AuthController {
     @Body(BodyValidationPipe) logoutAuthDto: LogoutAuthDto,
     @Req() req: Request,
   ) {
-    return this.authService.logout(logoutAuthDto, getAuthMetadata(req));
+    return this.authService.logout(
+      logoutAuthDto,
+      getAuthMetadata(req, logoutAuthDto.clientIp),
+    );
   }
 
   @UseGuards(TokenGuard)
