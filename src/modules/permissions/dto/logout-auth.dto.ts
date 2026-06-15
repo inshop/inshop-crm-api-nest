@@ -1,13 +1,8 @@
-import { IsOptional, IsString } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class LogoutAuthDto {
   @IsString()
   @ApiProperty()
   refreshToken: string;
-
-  @IsOptional()
-  @IsString()
-  @ApiPropertyOptional()
-  clientIp?: string;
 }

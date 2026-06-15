@@ -25,9 +25,12 @@ function getHeader(req: Request, name: string): string | undefined {
   return raw.split(',')[0].trim();
 }
 
-function getAuthMetadata(req: Request, clientIp?: string) {
+function getAuthMetadata(req: Request) {
   return {
-    ip: clientIp ?? req.ip,
+    ip:
+      getHeader(req, 'x-forwarded-for') ??
+      getHeader(req, 'x-real-ip') ??
+      req.ip,
     userAgent: getHeader(req, 'user-agent'),
   };
 }
@@ -43,7 +46,7 @@ export class AuthController {
   ): Promise<ResponseAuthDto> {
     return this.authService.login(
       loginAuthDto,
-      getAuthMetadata(req, loginAuthDto.clientIp),
+      getAuthMetadata(req),
     );
   }
 
@@ -61,7 +64,7 @@ export class AuthController {
   ) {
     return this.authService.logout(
       logoutAuthDto,
-      getAuthMetadata(req, logoutAuthDto.clientIp),
+      getAuthMetadata(req),
     );
   }
 
