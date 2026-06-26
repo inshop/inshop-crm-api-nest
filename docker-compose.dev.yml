@@ -1,0 +1,81 @@
+name: inshop-crm-dev
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-api}
+      POSTGRES_USER: ${DATABASE_USER:-api}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-api}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER:-api} -d ${DATABASE_NAME:-api}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db-test:
+    profiles: [test]
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DATABASE_TEST_NAME:-api_test}
+      POSTGRES_USER: ${DATABASE_USER:-api}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-api}
+    volumes:
+      - db-test-data:/var/lib/postgresql/data
+    ports:
+      - "${DATABASE_TEST_PORT:-5433}:5432"
+
+  api:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    user: root
+    volumes:
+      - .:/app
+      - api-node-modules:/app/node_modules
+    ports:
+      - "${PORT:-4000}:4000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_HOST: db
+    command: >
+      sh -c "apt-get update &&
+             apt-get install -y --no-install-recommends python3 make g++ &&
+             rm -rf /var/lib/apt/lists/* &&
+             yarn install --frozen-lockfile &&
+             yarn start:dev"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  admin:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    volumes:
+      - ../inshop-crm-admin-next:/app
+      - admin-node-modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: ../inshop-crm-admin-next/.env.local
+        required: false
+    environment:
+      BACKEND_BASE_URL: http://api:4000
+    command: sh -c "yarn install --frozen-lockfile && yarn dev -- -H 0.0.0.0"
+    depends_on:
+      - api
+
+volumes:
+  db-data:
+  db-test-data:
+  api-node-modules:
+  admin-node-modules:
