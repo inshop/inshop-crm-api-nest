@@ -2,11 +2,11 @@
 
 **NestJS REST API for feature flag management, RBAC, audit logging, and client bootstrap endpoints.**
 
-This is the backend for [InShop CRM API Config Admin](https://github.com/inshopgroup/inshop-crm-admin-next) — a self-hosted system to manage boolean feature flags per project and environment, control admin access through groups and roles, and expose read-only flag endpoints to client apps via scoped API tokens.
+This is the backend for [InShop CRM API Config Admin](https://github.com/inshop/inshop-crm-admin-next) — a self-hosted system to manage boolean feature flags per project and environment, control admin access through groups and roles, and expose read-only flag endpoints to client apps via scoped API tokens.
 
 | | |
 |---|---|
-| **Admin dashboard** | [inshop-crm-admin-next](https://github.com/inshopgroup/inshop-crm-admin-next) |
+| **Admin dashboard** | [inshop-crm-admin-next](https://github.com/inshop/inshop-crm-admin-next) |
 | **Stack** | NestJS 11 · TypeORM · PostgreSQL · JWT · Swagger |
 | **Default URL** | [http://localhost:4000](http://localhost:4000) |
 | **Swagger UI** | [http://localhost:4000/api](http://localhost:4000/api) |
@@ -66,7 +66,7 @@ This is the backend for [InShop CRM API Config Admin](https://github.com/inshopg
 ## Quick start
 
 ```bash
-git clone https://github.com/inshopgroup/inshop-crm-api-nest.git
+git clone https://github.com/inshop/inshop-crm-api-nest.git
 cd inshop-crm-api-nest
 yarn install
 cp .env.example .env
@@ -81,7 +81,7 @@ yarn start:dev
 
 Open Swagger at [http://localhost:4000/api](http://localhost:4000/api).
 
-Start the [admin dashboard](https://github.com/inshopgroup/inshop-crm-admin-next#quick-start) for the web UI, or use the API directly.
+Start the [admin dashboard](https://github.com/inshop/inshop-crm-admin-next#quick-start) for the web UI, or use the API directly.
 
 Default admin (seeded on first startup):
 
@@ -157,8 +157,8 @@ yarn start:prod
 
 | Audience | Header | How to obtain |
 |----------|--------|---------------|
-| Admin panel / CRUD | `Authorization: Bearer <JWT>` | `POST /api/admin/auth/login` or [dashboard sign-in](https://github.com/inshopgroup/inshop-crm-admin-next#sign-in) |
-| Client feature flags | `Authorization: Bearer <API token>` | Create under [Permissions → API Tokens](https://github.com/inshopgroup/inshop-crm-admin-next#typical-workflow) or `POST /api/admin/api-tokens` |
+| Admin panel / CRUD | `Authorization: Bearer <JWT>` | `POST /api/admin/auth/login` or [dashboard sign-in](https://github.com/inshop/inshop-crm-admin-next#sign-in) |
+| Client feature flags | `Authorization: Bearer <API token>` | Create under [Permissions → API Tokens](https://github.com/inshop/inshop-crm-admin-next#typical-workflow) or `POST /api/admin/api-tokens` |
 
 ### Auth endpoints
 
@@ -204,7 +204,7 @@ All admin routes require JWT + role guards unless noted. Full request/response s
 | `PATCH` | `/:id/environments/:environmentId` | `ROLE_FEATURE_FLAG_UPDATE` |
 | `DELETE` | `/:id` | `ROLE_FEATURE_FLAG_DELETE` |
 
-Manage flags in the [dashboard Feature Flags section](https://github.com/inshopgroup/inshop-crm-admin-next#feature-flags).
+Manage flags in the [dashboard Feature Flags section](https://github.com/inshop/inshop-crm-admin-next#feature-flags).
 
 ### Users — `/api/admin/users`
 
@@ -256,11 +256,11 @@ curl -s "http://localhost:4000/api/feature-flags/checkout?project=my-app&environ
   -H "Authorization: Bearer ff_your_api_token"
 ```
 
-Create tokens in the [dashboard](https://github.com/inshopgroup/inshop-crm-admin-next#api-tokens) — it shows copy-ready `curl` samples with your project and environment codes.
+Create tokens in the [dashboard](https://github.com/inshop/inshop-crm-admin-next#api-tokens) — it shows copy-ready `curl` samples with your project and environment codes.
 
 ## Admin API tokens
 
-Manage via [dashboard → Permissions → API Tokens](https://github.com/inshopgroup/inshop-crm-admin-next#api-tokens) or REST:
+Manage via [dashboard → Permissions → API Tokens](https://github.com/inshop/inshop-crm-admin-next#api-tokens) or REST:
 
 | Method | Path | Role |
 |--------|------|------|
@@ -304,7 +304,7 @@ Each module exposes five roles where applicable:
 | Audit | `ROLE_AUDIT_LIST`, `ROLE_AUDIT_DETAILS` |
 | API tokens | `ROLE_API_TOKEN_*` |
 
-Assign roles to groups in the [dashboard Groups section](https://github.com/inshopgroup/inshop-crm-admin-next#groups).
+Assign roles to groups in the [dashboard Groups section](https://github.com/inshop/inshop-crm-admin-next#groups).
 
 ## Audit log
 
@@ -317,18 +317,18 @@ Tracked actions: `create`, `update`, `delete`, `login`, `logout`.
 
 Entity types: `user`, `group`, `project`, `environment`, `feature_flag`, `api_token`, `auth`.
 
-View the global log in the [dashboard Audit Log](https://github.com/inshopgroup/inshop-crm-admin-next#audit-log) or per-entity history on feature flag details.
+View the global log in the [dashboard Audit Log](https://github.com/inshop/inshop-crm-admin-next#audit-log) or per-entity history on feature flag details.
 
 ## Dashboard UI
 
-The [admin dashboard](https://github.com/inshopgroup/inshop-crm-admin-next) provides:
+The [admin dashboard](https://github.com/inshop/inshop-crm-admin-next) provides:
 
 - Feature flag grid with environment toggles and filters
 - CRUD dialogs for all resources
 - API token management with `curl` examples
 - Audit history with change diffs
 
-[Screenshots](https://github.com/inshopgroup/inshop-crm-admin-next#screenshots) · [Quick start](https://github.com/inshopgroup/inshop-crm-admin-next#quick-start)
+[Screenshots](https://github.com/inshop/inshop-crm-admin-next#screenshots) · [Quick start](https://github.com/inshop/inshop-crm-admin-next#quick-start)
 
 ## Architecture
 
@@ -369,4 +369,4 @@ yarn test:cov
 
 CI runs the same suite with a Postgres service — see [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
-For frontend tests, see [dashboard testing](https://github.com/inshopgroup/inshop-crm-admin-next#testing).
+For frontend tests, see [dashboard testing](https://github.com/inshop/inshop-crm-admin-next#testing).
