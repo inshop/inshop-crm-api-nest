@@ -22,9 +22,8 @@ export class ApiToken {
   @Exclude()
   tokenHash: string;
 
-  @Column({ type: 'text', nullable: true })
-  @Exclude()
-  encryptedToken?: string;
+  @Column()
+  tokenPrefix: string;
 
   @ManyToOne(() => Environment, { nullable: false, eager: true })
   @JoinColumn({ name: 'environmentId' })

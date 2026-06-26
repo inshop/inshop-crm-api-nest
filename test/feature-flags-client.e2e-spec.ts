@@ -11,7 +11,7 @@ import { Environment } from '../src/modules/environments/entities/environment.en
 import { FeatureFlag } from '../src/modules/feature-flags/entities/feature-flag.entity';
 import { FeatureFlagEnvironmentValue } from '../src/modules/feature-flags/entities/feature-flag-environment-value.entity';
 import { User } from '../src/modules/permissions/entities/user.entity';
-import { generateApiToken, hashApiToken } from '../src/modules/api-tokens/utils/token-hash';
+import { generateApiToken, hashApiToken, tokenPrefix } from '../src/modules/api-tokens/utils/token-hash';
 import { ApiToken } from '../src/modules/api-tokens/entities/api-token.entity';
 
 describe('Feature flags client API (e2e)', () => {
@@ -107,6 +107,7 @@ describe('Feature flags client API (e2e)', () => {
       apiTokensRepository.create({
         name: 'Client token',
         tokenHash: hashApiToken(plainToken),
+        tokenPrefix: tokenPrefix(plainToken),
         environment,
         createdBy: admin,
         isActive: true,

@@ -361,6 +361,8 @@ Manage via [dashboard → Permissions → API Tokens](https://github.com/inshop/
 
 Create/update body: `{ "name", "environmentId", "isActive" }`.
 
+Only `POST` create and `POST …/regenerate` return `plainToken`. List and details expose `tokenPrefix` (e.g. `ff_a1b2c3d4…x9f0`) for identification; the full secret is stored as a SHA-256 hash only.
+
 **Example — login and create a token:**
 
 ```bash

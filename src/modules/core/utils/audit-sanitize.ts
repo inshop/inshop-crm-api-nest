@@ -1,5 +1,11 @@
 const SENSITIVE_KEYS = new Set(['password']);
-const SKIP_AUDIT_KEYS = new Set(['password', 'featureFlag', 'plainToken']);
+const SKIP_AUDIT_KEYS = new Set([
+  'password',
+  'featureFlag',
+  'plainToken',
+  'tokenHash',
+  'encryptedToken',
+]);
 
 function environmentLabel(environment: unknown): string {
   if (typeof environment !== 'object' || environment === null) {

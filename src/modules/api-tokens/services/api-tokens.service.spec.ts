@@ -5,7 +5,7 @@ import { ApiToken } from '../entities/api-token.entity';
 import { Environment } from '../../environments/entities/environment.entity';
 import { AuditService } from '../../audit/services/audit.service';
 import { User } from '../../permissions/entities/user.entity';
-import { decryptApiToken, encryptApiToken } from '../utils/token-crypto';
+import { hashApiToken, tokenPrefix } from '../utils/token-hash';
 
 jest.mock('../utils/token-hash', () => ({
   ...jest.requireActual('../utils/token-hash'),
@@ -81,11 +81,11 @@ describe('ApiTokensService', () => {
     const savedToken = {
       id: 10,
       name: 'CI token',
+      tokenPrefix: tokenPrefix(plainToken),
       environment,
       createdBy: actor,
       isActive: true,
       createdAt: new Date(),
-      encryptedToken: encryptApiToken(plainToken),
     };
 
     apiTokensRepository.findOneOrFail.mockResolvedValue(savedToken);
@@ -102,20 +102,35 @@ describe('ApiTokensService', () => {
     expect(apiTokensRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'CI token',
-        tokenHash: expect.any(String),
-        encryptedToken: expect.any(String),
+        tokenHash: hashApiToken(plainToken),
+        tokenPrefix: tokenPrefix(plainToken),
       }),
     );
-    expect(result.plainToken).toMatch(/^ff_/);
-    expect(decryptApiToken(apiTokensRepository.create.mock.calls[0][0].encryptedToken)).toBe(
-      result.plainToken,
-    );
+    expect(result.plainToken).toBe(plainToken);
+    expect(result.tokenPrefix).toBe(tokenPrefix(plainToken));
     expect(auditService.logCreateIf).toHaveBeenCalledWith(
       actor,
       'api_token',
       10,
       expect.not.objectContaining({ plainToken: expect.any(String) }),
     );
+  });
+
+  it('findOne does not return plainToken', async () => {
+    apiTokensRepository.findOneOrFail.mockResolvedValue({
+      id: 10,
+      name: 'CI token',
+      tokenPrefix: 'ff_test…oken',
+      environment,
+      createdBy: actor,
+      isActive: true,
+      createdAt: new Date(),
+    });
+
+    const result = await service.findOne(10);
+
+    expect(result).not.toHaveProperty('plainToken');
+    expect(result.tokenPrefix).toBe('ff_test…oken');
   });
 
   it('findAll filters by environmentId', async () => {
@@ -196,7 +211,7 @@ describe('ApiTokensService', () => {
     );
   });
 
-  it('regenerateSecret stores new encrypted token and returns plainToken', async () => {
+  it('regenerateSecret stores new hash and returns plainToken', async () => {
     const plainToken = 'ff_test_secret_token';
     jest.mocked(generateApiToken).mockReturnValue(plainToken);
 
@@ -207,14 +222,14 @@ describe('ApiTokensService', () => {
       environment,
       createdBy: actor,
       tokenHash: 'old-hash',
-      encryptedToken: undefined,
+      tokenPrefix: 'ff_old…hash',
     };
 
     apiTokensRepository.findOneOrFail
       .mockResolvedValueOnce(apiToken)
       .mockResolvedValueOnce({
         ...apiToken,
-        encryptedToken: encryptApiToken(plainToken),
+        tokenPrefix: tokenPrefix(plainToken),
       });
     apiTokensRepository.save.mockImplementation(async (entity) => entity);
 
@@ -222,8 +237,8 @@ describe('ApiTokensService', () => {
 
     expect(apiTokensRepository.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        tokenHash: expect.any(String),
-        encryptedToken: expect.any(String),
+        tokenHash: hashApiToken(plainToken),
+        tokenPrefix: tokenPrefix(plainToken),
       }),
     );
     expect(result.plainToken).toBe(plainToken);

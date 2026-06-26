@@ -9,8 +9,11 @@ import { buildListWhere } from '../../core/utils/list-filters';
 import { AuditService } from '../../audit/services/audit.service';
 import { AuditEntityType } from '../../audit/constants/audit.constants';
 import { User } from '../../permissions/entities/user.entity';
-import { generateApiToken, hashApiToken } from '../utils/token-hash';
-import { decryptApiToken, encryptApiToken } from '../utils/token-crypto';
+import {
+  generateApiToken,
+  hashApiToken,
+  tokenPrefix,
+} from '../utils/token-hash';
 
 const API_TOKEN_RELATIONS = {
   environment: true,
@@ -34,7 +37,7 @@ export class ApiTokensService {
     const apiToken = this.apiTokensRepository.create({
       ...rest,
       tokenHash: hashApiToken(plainToken),
-      encryptedToken: encryptApiToken(plainToken),
+      tokenPrefix: tokenPrefix(plainToken),
       environment: await this.environmentsRepository.findOneByOrFail({
         id: environmentId,
       }),
@@ -43,16 +46,15 @@ export class ApiTokensService {
 
     const saved = await this.apiTokensRepository.save(apiToken);
     const result = await this.findOne(saved.id);
-    const { plainToken: _plainToken, ...auditPayload } = result;
 
     await this.auditService.logCreateIf(
       actor,
       AuditEntityType.API_TOKEN,
       saved.id,
-      auditPayload as unknown as Record<string, unknown>,
+      result as unknown as Record<string, unknown>,
     );
 
-    return result;
+    return { ...result, plainToken };
   }
 
   findAll(take: number, skip: number, filter?: Record<string, string>) {
@@ -100,7 +102,7 @@ export class ApiTokensService {
     const plainToken = generateApiToken();
 
     apiToken.tokenHash = hashApiToken(plainToken);
-    apiToken.encryptedToken = encryptApiToken(plainToken);
+    apiToken.tokenPrefix = tokenPrefix(plainToken);
 
     await this.apiTokensRepository.save(apiToken);
     const result = await this.findOne(id);
@@ -113,22 +115,18 @@ export class ApiTokensService {
       result as unknown as Record<string, unknown>,
     );
 
-    return result;
+    return { ...result, plainToken };
   }
 
   private toResponse(apiToken: ApiToken) {
-    const plainToken = apiToken.encryptedToken
-      ? decryptApiToken(apiToken.encryptedToken)
-      : undefined;
-
     return {
       id: apiToken.id,
       name: apiToken.name,
+      tokenPrefix: apiToken.tokenPrefix,
       environment: apiToken.environment,
       isActive: apiToken.isActive,
       createdBy: apiToken.createdBy,
       createdAt: apiToken.createdAt,
-      ...(plainToken ? { plainToken } : {}),
     };
   }
 

@@ -130,15 +130,15 @@ describe('API tokens admin API (e2e)', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].plainToken).toBeUndefined();
     expect(rows[0].tokenHash).toBeUndefined();
-    expect(rows[0].encryptedToken).toBeUndefined();
+    expect(rows[0].tokenPrefix).toMatch(/^ff_/);
 
     const detailsResponse = await request(app.getHttpServer())
       .get(`/api/admin/api-tokens/${createResponse.body.id}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
 
-    expect(detailsResponse.body.plainToken).toBe(createResponse.body.plainToken);
-    expect(detailsResponse.body.encryptedToken).toBeUndefined();
+    expect(detailsResponse.body.plainToken).toBeUndefined();
+    expect(detailsResponse.body.tokenPrefix).toBe(createResponse.body.tokenPrefix);
   });
 
   it('POST /api/admin/api-tokens/:id/regenerate returns new plainToken', async () => {
@@ -169,8 +169,9 @@ describe('API tokens admin API (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
 
-    expect(detailsResponse.body.plainToken).toBe(
-      regenerateResponse.body.plainToken,
+    expect(detailsResponse.body.plainToken).toBeUndefined();
+    expect(detailsResponse.body.tokenPrefix).toBe(
+      regenerateResponse.body.tokenPrefix,
     );
   });
 });
