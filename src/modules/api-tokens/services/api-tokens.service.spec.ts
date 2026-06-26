@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ApiTokensService } from './api-tokens.service';
 import { ApiToken } from '../entities/api-token.entity';
-import { Project } from '../../projects/entities/project.entity';
 import { Environment } from '../../environments/entities/environment.entity';
 import { AuditService } from '../../audit/services/audit.service';
 import { User } from '../../permissions/entities/user.entity';
@@ -25,7 +24,6 @@ describe('ApiTokensService', () => {
     findAndCount: jest.Mock;
     delete: jest.Mock;
   };
-  let projectsRepository: { findOneByOrFail: jest.Mock };
   let environmentsRepository: { findOneByOrFail: jest.Mock };
   let auditService: {
     logCreateIf: jest.Mock;
@@ -33,7 +31,6 @@ describe('ApiTokensService', () => {
     logDeleteIf: jest.Mock;
   };
 
-  const project = { id: 1, code: 'my-app', name: 'My App' };
   const environment = { id: 2, code: 'staging', name: 'Staging' };
   const actor = { id: 9, name: 'Admin' } as User;
 
@@ -45,10 +42,6 @@ describe('ApiTokensService', () => {
       findOne: jest.fn(),
       findAndCount: jest.fn().mockResolvedValue([[], 0]),
       delete: jest.fn(),
-    };
-
-    projectsRepository = {
-      findOneByOrFail: jest.fn().mockResolvedValue(project),
     };
 
     environmentsRepository = {
@@ -67,10 +60,6 @@ describe('ApiTokensService', () => {
         {
           provide: getRepositoryToken(ApiToken),
           useValue: apiTokensRepository,
-        },
-        {
-          provide: getRepositoryToken(Project),
-          useValue: projectsRepository,
         },
         {
           provide: getRepositoryToken(Environment),
@@ -92,7 +81,6 @@ describe('ApiTokensService', () => {
     const savedToken = {
       id: 10,
       name: 'CI token',
-      project,
       environment,
       createdBy: actor,
       isActive: true,
@@ -105,7 +93,6 @@ describe('ApiTokensService', () => {
     const result = await service.create(
       {
         name: 'CI token',
-        projectId: 1,
         environmentId: 2,
         isActive: true,
       },
@@ -131,9 +118,8 @@ describe('ApiTokensService', () => {
     );
   });
 
-  it('findAll filters by projectId and environmentId', async () => {
+  it('findAll filters by environmentId', async () => {
     await service.findAll(20, 0, {
-      projectId: '1',
       environmentId: '2',
       name: 'prod',
     });
@@ -144,7 +130,6 @@ describe('ApiTokensService', () => {
         skip: 0,
         where: expect.objectContaining({
           name: expect.anything(),
-          project: { id: 1 },
           environment: { id: 2 },
         }),
       }),
@@ -156,7 +141,6 @@ describe('ApiTokensService', () => {
       id: 5,
       name: 'Old',
       isActive: true,
-      project,
       environment,
       createdBy: actor,
     };
@@ -177,14 +161,12 @@ describe('ApiTokensService', () => {
     );
   });
 
-  it('update can change project and environment', async () => {
-    const otherProject = { id: 3, code: 'other', name: 'Other' };
+  it('update can change environment', async () => {
     const otherEnvironment = { id: 4, code: 'prod', name: 'Production' };
     const apiToken = {
       id: 5,
       name: 'Token',
       isActive: true,
-      project,
       environment,
       createdBy: actor,
     };
@@ -193,26 +175,22 @@ describe('ApiTokensService', () => {
       .mockResolvedValueOnce(apiToken)
       .mockResolvedValueOnce({
         ...apiToken,
-        project: otherProject,
         environment: otherEnvironment,
       });
-    projectsRepository.findOneByOrFail.mockResolvedValue(otherProject);
     environmentsRepository.findOneByOrFail.mockResolvedValue(otherEnvironment);
     apiTokensRepository.save.mockImplementation(async (entity) => entity);
 
     await service.update(
       5,
-      { projectId: 3, environmentId: 4 },
+      { environmentId: 4 },
       actor,
     );
 
-    expect(projectsRepository.findOneByOrFail).toHaveBeenCalledWith({ id: 3 });
     expect(environmentsRepository.findOneByOrFail).toHaveBeenCalledWith({
       id: 4,
     });
     expect(apiTokensRepository.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        project: otherProject,
         environment: otherEnvironment,
       }),
     );
@@ -226,7 +204,6 @@ describe('ApiTokensService', () => {
       id: 5,
       name: 'Token',
       isActive: true,
-      project,
       environment,
       createdBy: actor,
       tokenHash: 'old-hash',

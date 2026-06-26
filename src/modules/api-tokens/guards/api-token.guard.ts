@@ -9,12 +9,10 @@ import { Request } from 'express';
 import { ApiTokensService } from '../services/api-tokens.service';
 import { hashApiToken } from '../utils/token-hash';
 import { ApiToken } from '../entities/api-token.entity';
-import { Project } from '../../projects/entities/project.entity';
 import { Environment } from '../../environments/entities/environment.entity';
 
 export type ApiTokenRequest = Request & {
   apiToken: ApiToken;
-  project: Project;
   environment: Environment;
 };
 
@@ -38,22 +36,17 @@ export class ApiTokenGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const projectCode = this.getQueryParam(request, 'project');
     const environmentCode = this.getQueryParam(request, 'environment');
 
-    if (!projectCode || !environmentCode) {
-      throw new ForbiddenException('project and environment query params are required');
+    if (!environmentCode) {
+      throw new ForbiddenException('environment query param is required');
     }
 
-    if (
-      apiToken.project.code !== projectCode ||
-      apiToken.environment.code !== environmentCode
-    ) {
-      throw new ForbiddenException('Token scope does not match project and environment');
+    if (apiToken.environment.code !== environmentCode) {
+      throw new ForbiddenException('Token scope does not match environment');
     }
 
     request.apiToken = apiToken;
-    request.project = apiToken.project;
     request.environment = apiToken.environment;
 
     return true;

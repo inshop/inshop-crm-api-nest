@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { CreateApiTokenDto } from '../dto/create-api-token.dto';
 import { UpdateApiTokenDto } from '../dto/update-api-token.dto';
 import { ApiToken } from '../entities/api-token.entity';
-import { Project } from '../../projects/entities/project.entity';
 import { Environment } from '../../environments/entities/environment.entity';
 import { buildListWhere } from '../../core/utils/list-filters';
 import { AuditService } from '../../audit/services/audit.service';
@@ -14,7 +13,6 @@ import { generateApiToken, hashApiToken } from '../utils/token-hash';
 import { decryptApiToken, encryptApiToken } from '../utils/token-crypto';
 
 const API_TOKEN_RELATIONS = {
-  project: true,
   environment: true,
   createdBy: true,
 } as const;
@@ -24,22 +22,19 @@ export class ApiTokensService {
   constructor(
     @InjectRepository(ApiToken)
     private apiTokensRepository: Repository<ApiToken>,
-    @InjectRepository(Project)
-    private projectsRepository: Repository<Project>,
     @InjectRepository(Environment)
     private environmentsRepository: Repository<Environment>,
     private auditService: AuditService,
   ) {}
 
   async create(createApiTokenDto: CreateApiTokenDto, actor?: User) {
-    const { projectId, environmentId, ...rest } = createApiTokenDto;
+    const { environmentId, ...rest } = createApiTokenDto;
     const plainToken = generateApiToken();
 
     const apiToken = this.apiTokensRepository.create({
       ...rest,
       tokenHash: hashApiToken(plainToken),
       encryptedToken: encryptApiToken(plainToken),
-      project: await this.projectsRepository.findOneByOrFail({ id: projectId }),
       environment: await this.environmentsRepository.findOneByOrFail({
         id: environmentId,
       }),
@@ -69,14 +64,9 @@ export class ApiTokensService {
         isActive: 'boolean',
       },
       {
-        project: { id: 'number' },
         environment: { id: 'number' },
       },
     );
-
-    if (filter?.projectId) {
-      where.project = { id: Number(filter.projectId) };
-    }
 
     if (filter?.environmentId) {
       where.environment = { id: Number(filter.environmentId) };
@@ -134,7 +124,6 @@ export class ApiTokensService {
     return {
       id: apiToken.id,
       name: apiToken.name,
-      project: apiToken.project,
       environment: apiToken.environment,
       isActive: apiToken.isActive,
       createdBy: apiToken.createdBy,
@@ -146,7 +135,7 @@ export class ApiTokensService {
   findByTokenHash(tokenHash: string) {
     return this.apiTokensRepository.findOne({
       where: { tokenHash, isActive: true },
-      relations: { project: true, environment: true },
+      relations: { environment: true },
     });
   }
 
@@ -157,15 +146,9 @@ export class ApiTokensService {
     });
 
     const before = { ...apiToken } as unknown as Record<string, unknown>;
-    const { id: _id, projectId, environmentId, ...rest } = updateApiTokenDto;
+    const { id: _id, environmentId, ...rest } = updateApiTokenDto;
 
     Object.assign(apiToken, rest);
-
-    if (projectId !== undefined) {
-      apiToken.project = await this.projectsRepository.findOneByOrFail({
-        id: projectId,
-      });
-    }
 
     if (environmentId !== undefined) {
       apiToken.environment = await this.environmentsRepository.findOneByOrFail({

@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { Project } from '../../projects/entities/project.entity';
 import { Environment } from '../../environments/entities/environment.entity';
 import { User } from '../../permissions/entities/user.entity';
 
@@ -26,10 +25,6 @@ export class ApiToken {
   @Column({ type: 'text', nullable: true })
   @Exclude()
   encryptedToken?: string;
-
-  @ManyToOne(() => Project, { nullable: false, eager: true })
-  @JoinColumn({ name: 'projectId' })
-  project: Project;
 
   @ManyToOne(() => Environment, { nullable: false, eager: true })
   @JoinColumn({ name: 'environmentId' })

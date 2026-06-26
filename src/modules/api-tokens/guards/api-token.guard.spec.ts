@@ -11,12 +11,10 @@ describe('ApiTokenGuard', () => {
   let guard: ApiTokenGuard;
   let apiTokensService: { findByTokenHash: jest.Mock };
 
-  const project = { id: 1, code: 'my-app', name: 'My App' };
   const environment = { id: 2, code: 'staging', name: 'Staging' };
 
   const createContext = (overrides?: {
     authorization?: string;
-    project?: string;
     environment?: string;
   }) => {
     const request = {
@@ -24,7 +22,7 @@ describe('ApiTokenGuard', () => {
         authorization: overrides?.authorization,
       },
       query: {
-        project: overrides?.project ?? 'my-app',
+        project: 'my-app',
         environment: overrides?.environment ?? 'staging',
       },
     };
@@ -63,9 +61,8 @@ describe('ApiTokenGuard', () => {
     );
   });
 
-  it('throws ForbiddenException when project or environment is missing', async () => {
+  it('throws ForbiddenException when environment is missing', async () => {
     apiTokensService.findByTokenHash.mockResolvedValue({
-      project,
       environment,
     });
 
@@ -83,9 +80,8 @@ describe('ApiTokenGuard', () => {
     );
   });
 
-  it('throws ForbiddenException when scope does not match', async () => {
+  it('throws ForbiddenException when environment does not match', async () => {
     apiTokensService.findByTokenHash.mockResolvedValue({
-      project,
       environment,
     });
 
@@ -93,16 +89,15 @@ describe('ApiTokenGuard', () => {
       guard.canActivate(
         createContext({
           authorization: 'Bearer ff_valid',
-          project: 'other-app',
+          environment: 'production',
         }),
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
-  it('attaches apiToken, project and environment on success', async () => {
+  it('attaches apiToken and environment on success', async () => {
     const apiToken = {
       id: 1,
-      project,
       environment,
     };
     apiTokensService.findByTokenHash.mockResolvedValue(apiToken);
@@ -121,7 +116,6 @@ describe('ApiTokenGuard', () => {
     await expect(guard.canActivate(context)).resolves.toBe(true);
     expect(request).toMatchObject({
       apiToken,
-      project,
       environment,
     });
   });

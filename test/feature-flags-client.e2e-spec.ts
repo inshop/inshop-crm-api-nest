@@ -107,7 +107,6 @@ describe('Feature flags client API (e2e)', () => {
       apiTokensRepository.create({
         name: 'Client token',
         tokenHash: hashApiToken(plainToken),
-        project,
         environment,
         createdBy: admin,
         isActive: true,
@@ -126,9 +125,9 @@ describe('Feature flags client API (e2e)', () => {
       .expect(401);
   });
 
-  it('GET /api/feature-flags/bootstrap returns 403 for wrong scope', async () => {
+  it('GET /api/feature-flags/bootstrap returns 403 for wrong environment', async () => {
     await request(app.getHttpServer())
-      .get('/api/feature-flags/bootstrap?project=other&environment=staging')
+      .get(`/api/feature-flags/bootstrap?project=${projectCode}&environment=production`)
       .set('Authorization', `Bearer ${plainToken}`)
       .expect(403);
   });

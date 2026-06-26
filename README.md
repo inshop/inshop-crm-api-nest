@@ -54,7 +54,7 @@ This is the backend for [InShop CRM API Config Admin](https://github.com/inshop/
 
 ### API tokens
 
-- Scoped to one project + one environment
+- Scoped to one environment
 - Prefix `ff_…`; plain value shown once on create or regenerate
 - Used by client apps to read feature flags without admin JWT
 
@@ -325,7 +325,7 @@ Modules: `users`, `groups`, `projects`, `environments`, `featureFlags`, `audit`,
 
 ## Client feature flags (API token)
 
-For application runtimes — not the admin panel. Query params `project` and `environment` are **required** and must match the API token's project/environment **codes**.
+For application runtimes — not the admin panel. Query param `environment` is **required** and must match the API token's environment **code**. Query param `project` is **required** for feature flag lookup (any valid project code).
 
 | Method | Path | Response |
 |--------|------|----------|
@@ -344,7 +344,7 @@ curl -s "http://localhost:4000/api/feature-flags/checkout?project=my-app&environ
   -H "Authorization: Bearer ff_your_api_token"
 ```
 
-Create tokens in the [dashboard](https://github.com/inshop/inshop-crm-admin-next#api-tokens) — it shows copy-ready `curl` samples with your project and environment codes.
+Create tokens in the [dashboard](https://github.com/inshop/inshop-crm-admin-next#api-tokens) — it shows copy-ready `curl` samples with your environment code.
 
 ## Admin API tokens
 
@@ -359,7 +359,7 @@ Manage via [dashboard → Permissions → API Tokens](https://github.com/inshop/
 | `PATCH` | `/api/admin/api-tokens/:id` | `ROLE_API_TOKEN_UPDATE` |
 | `DELETE` | `/api/admin/api-tokens/:id` | `ROLE_API_TOKEN_DELETE` |
 
-Create/update body: `{ "name", "projectId", "environmentId", "isActive" }`.
+Create/update body: `{ "name", "environmentId", "isActive" }`.
 
 **Example — login and create a token:**
 
@@ -373,7 +373,7 @@ curl -s -X POST http://localhost:4000/api/admin/auth/login \
 curl -s -X POST http://localhost:4000/api/admin/api-tokens \
   -H "Authorization: Bearer <JWT>" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Local dev","projectId":1,"environmentId":1,"isActive":true}'
+  -d '{"name":"Local dev","environmentId":1,"isActive":true}'
 ```
 
 ## Permissions and roles

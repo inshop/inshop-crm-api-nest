@@ -10,13 +10,11 @@ import { Group } from '../src/modules/permissions/entities/group.entity';
 import { User } from '../src/modules/permissions/entities/user.entity';
 import { AppRole } from '../src/modules/permissions/constants/roles.constants';
 import { Role } from '../src/modules/permissions/entities/role.entity';
-import { Project } from '../src/modules/projects/entities/project.entity';
 import { Environment } from '../src/modules/environments/entities/environment.entity';
 
 describe('API tokens admin API (e2e)', () => {
   let app: INestApplication<App>;
   let dataSource: DataSource;
-  let projectId: number;
   let environmentId: number;
 
   beforeAll(async () => {
@@ -35,20 +33,10 @@ describe('API tokens admin API (e2e)', () => {
     );
     await app.get(RolesSyncService).sync();
 
-    const projectsRepository = app.get<Repository<Project>>(
-      getRepositoryToken(Project),
-    );
     const environmentsRepository = app.get<Repository<Environment>>(
       getRepositoryToken(Environment),
     );
 
-    const project = await projectsRepository.save(
-      projectsRepository.create({
-        name: 'My App',
-        code: 'my-app',
-        isActive: true,
-      }),
-    );
     const environment = await environmentsRepository.save(
       environmentsRepository.create({
         name: 'Staging',
@@ -57,7 +45,6 @@ describe('API tokens admin API (e2e)', () => {
       }),
     );
 
-    projectId = project.id;
     environmentId = environment.id;
   });
 
@@ -125,7 +112,6 @@ describe('API tokens admin API (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         name: 'CI token',
-        projectId,
         environmentId,
         isActive: true,
       })
@@ -133,7 +119,6 @@ describe('API tokens admin API (e2e)', () => {
 
     expect(createResponse.body.plainToken).toMatch(/^ff_/);
     expect(createResponse.body.name).toBe('CI token');
-    expect(createResponse.body.project.code).toBe('my-app');
     expect(createResponse.body.environment.code).toBe('staging');
 
     const listResponse = await request(app.getHttpServer())
@@ -164,7 +149,6 @@ describe('API tokens admin API (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         name: 'Regenerate me',
-        projectId,
         environmentId,
         isActive: true,
       })
