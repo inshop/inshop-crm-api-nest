@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Query,
   Req,
@@ -59,6 +60,12 @@ export class FeatureFlagsClientController {
       throw new BadRequestException('project query param is required');
     }
 
-    return this.projectsRepository.findOneByOrFail({ code: projectCode });
+    const project = await this.projectsRepository.findOneBy({ code: projectCode });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return project;
   }
 }

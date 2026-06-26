@@ -330,7 +330,7 @@ For application runtimes — not the admin panel. Query param `environment` is *
 | Method | Path | Response |
 |--------|------|----------|
 | `GET` | `/api/feature-flags/bootstrap` | `{ "feature_flags": { "<code>": true } }` |
-| `GET` | `/api/feature-flags/:code` | `{ "enabled": true \| false }` — `404` if code does not exist |
+| `GET` | `/api/feature-flags/:code` | `{ "<code>": true \| false }` — `404` if code does not exist |
 
 **Examples** (replace `my-app`, `staging`, and the token):
 

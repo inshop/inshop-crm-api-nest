@@ -216,7 +216,7 @@ describe('FeatureFlagsService', () => {
       queryBuilder.getOne.mockResolvedValueOnce({ id: 1, code: 'checkout' });
 
       await expect(service.getClientValue('checkout', 1, 2)).resolves.toEqual({
-        enabled: true,
+        checkout: true,
       });
     });
 
@@ -225,7 +225,7 @@ describe('FeatureFlagsService', () => {
       queryBuilder.getOne.mockResolvedValueOnce(null);
 
       await expect(service.getClientValue('checkout', 1, 2)).resolves.toEqual({
-        enabled: false,
+        checkout: false,
       });
     });
 

@@ -154,7 +154,7 @@ describe('Feature flags client API (e2e)', () => {
       .set('Authorization', `Bearer ${plainToken}`)
       .expect(200);
 
-    expect(activeResponse.body).toEqual({ enabled: true });
+    expect(activeResponse.body).toEqual({ checkout: true });
 
     const inactiveResponse = await request(app.getHttpServer())
       .get(
@@ -163,7 +163,7 @@ describe('Feature flags client API (e2e)', () => {
       .set('Authorization', `Bearer ${plainToken}`)
       .expect(200);
 
-    expect(inactiveResponse.body).toEqual({ enabled: false });
+    expect(inactiveResponse.body).toEqual({ expired_flag: false });
   });
 
   it('GET /api/feature-flags/:code returns 404 for unknown code', async () => {
@@ -173,5 +173,15 @@ describe('Feature flags client API (e2e)', () => {
       )
       .set('Authorization', `Bearer ${plainToken}`)
       .expect(404);
+  });
+
+  it('GET /api/feature-flags/:code returns 404 for unknown project', async () => {
+    await request(app.getHttpServer())
+      .get(
+        `/api/feature-flags/checkout?project=unknown-project&environment=${environmentCode}`,
+      )
+      .set('Authorization', `Bearer ${plainToken}`)
+      .expect(404)
+      .expect({ message: 'Project not found', statusCode: 404 });
   });
 });

@@ -431,7 +431,7 @@ export class FeatureFlagsService {
       .andWhere('flag.code = :code', { code })
       .getOne();
 
-    return { enabled: !!active };
+    return { [code]: !!active };
   }
 
   private createClientFlagsQueryBuilder(projectId: number, environmentId: number) {
