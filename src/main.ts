@@ -21,7 +21,7 @@ async function bootstrap() {
     .setTitle('API documentation')
     .setDescription('The API description')
     .setVersion('1.0')
-    .addTag('Inshop CRM')
+    .addTag('API Config')
     .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);

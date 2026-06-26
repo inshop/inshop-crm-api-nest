@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import config from './config/config';
-import { ClientsModule } from './modules/clients/clients.module';
+import { ProjectsModule } from './modules/projects/projects.module';
+import { EnvironmentsModule } from './modules/environments/environments.module';
+import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
+import { ApiTokensModule } from './modules/api-tokens/api-tokens.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -14,7 +17,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 @Module({
   imports: [
     AuditModule,
-    ClientsModule,
+    ProjectsModule,
+    EnvironmentsModule,
+    FeatureFlagsModule,
+    ApiTokensModule,
     PermissionsModule,
     ConfigModule.forRoot({
       isGlobal: true,

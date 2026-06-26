@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres
+    image: postgres:17
     environment:
       - POSTGRES_DB=${DATABASE_NAME}
       - POSTGRES_USER=${DATABASE_USER}
@@ -11,7 +11,7 @@ services:
       - ${DATABASE_PORT}:5432
 
   db-test:
-    image: postgres
+    image: postgres:17
     environment:
       - POSTGRES_DB=${DATABASE_TEST_NAME:-api_test}
       - POSTGRES_USER=${DATABASE_USER}

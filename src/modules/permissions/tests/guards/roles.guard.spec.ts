@@ -40,7 +40,7 @@ describe('RolesGuard', () => {
   });
 
   it('throws when user is missing from request', () => {
-    reflector.getAllAndOverride.mockReturnValue([AppRole.CLIENT_LIST]);
+    reflector.getAllAndOverride.mockReturnValue([AppRole.PROJECT_LIST]);
 
     expect(() => guard.canActivate(createContext())).toThrow(
       ForbiddenException,
@@ -48,7 +48,7 @@ describe('RolesGuard', () => {
   });
 
   it('throws when user lacks required role', () => {
-    reflector.getAllAndOverride.mockReturnValue([AppRole.CLIENT_LIST]);
+    reflector.getAllAndOverride.mockReturnValue([AppRole.PROJECT_LIST]);
 
     expect(() =>
       guard.canActivate(createContext(userWithRoles([AppRole.USER_LIST]))),
@@ -56,10 +56,10 @@ describe('RolesGuard', () => {
   });
 
   it('allows access when user has required role', () => {
-    reflector.getAllAndOverride.mockReturnValue([AppRole.CLIENT_LIST]);
+    reflector.getAllAndOverride.mockReturnValue([AppRole.PROJECT_LIST]);
 
     expect(
-      guard.canActivate(createContext(userWithRoles([AppRole.CLIENT_LIST]))),
+      guard.canActivate(createContext(userWithRoles([AppRole.PROJECT_LIST]))),
     ).toBe(true);
   });
 });

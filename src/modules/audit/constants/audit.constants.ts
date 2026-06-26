@@ -9,7 +9,9 @@ export enum AuditAction {
 export enum AuditEntityType {
   USER = 'user',
   GROUP = 'group',
-  CLIENT = 'client',
-  CONTACT = 'contact',
+  PROJECT = 'project',
+  ENVIRONMENT = 'environment',
+  FEATURE_FLAG = 'feature_flag',
   AUTH = 'auth',
+  API_TOKEN = 'api_token',
 }

@@ -49,11 +49,13 @@ describe('API (e2e)', () => {
       .expect(401);
   });
 
-  it('GET /api/admin/clients returns 401 without token', async () => {
-    await request(app.getHttpServer()).get('/api/admin/clients').expect(401);
+  it('GET /api/admin/feature-flags returns 401 without token', async () => {
+    await request(app.getHttpServer())
+      .get('/api/admin/feature-flags')
+      .expect(401);
   });
 
-  it('GET /api/admin/clients returns 403 without CLIENT_LIST role', async () => {
+  it('GET /api/admin/feature-flags returns 403 without FEATURE_FLAG_LIST role', async () => {
     const groupsRepository = app.get<Repository<Group>>(
       getRepositoryToken(Group),
     );
@@ -89,19 +91,19 @@ describe('API (e2e)', () => {
       .expect(201);
 
     await request(app.getHttpServer())
-      .get('/api/admin/clients')
+      .get('/api/admin/feature-flags?take=10&skip=0')
       .set('Authorization', `Bearer ${loginResponse.body.token}`)
       .expect(403);
   });
 
-  it('GET /api/admin/clients returns 200 for admin token', async () => {
+  it('GET /api/admin/feature-flags returns 200 for admin token', async () => {
     const loginResponse = await request(app.getHttpServer())
       .post('/api/admin/auth/login')
       .send({ email: 'admin@admin.admin', password: 'admin@admin.admin' })
       .expect(201);
 
     const response = await request(app.getHttpServer())
-      .get('/api/admin/clients')
+      .get('/api/admin/feature-flags?take=10&skip=0')
       .set('Authorization', `Bearer ${loginResponse.body.token}`)
       .expect(200);
 

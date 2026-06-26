@@ -1,4 +1,53 @@
 const SENSITIVE_KEYS = new Set(['password']);
+const SKIP_AUDIT_KEYS = new Set(['password', 'featureFlag', 'plainToken']);
+
+function environmentLabel(environment: unknown): string {
+  if (typeof environment !== 'object' || environment === null) {
+    return String(environment ?? '?');
+  }
+
+  if ('name' in environment && typeof environment.name === 'string') {
+    return environment.name;
+  }
+
+  if ('code' in environment && typeof environment.code === 'string') {
+    return environment.code;
+  }
+
+  if ('id' in environment) {
+    return String(environment.id);
+  }
+
+  return '?';
+}
+
+function flattenEnvironmentValue(item: unknown): string {
+  if (typeof item !== 'object' || item === null) {
+    return String(item ?? '?');
+  }
+
+  const enabled =
+    'enabled' in item ? (item as { enabled: boolean }).enabled : undefined;
+  const environment =
+    'environment' in item
+      ? (item as { environment: unknown }).environment
+      : undefined;
+
+  if (enabled !== undefined) {
+    return `${environmentLabel(environment)}: ${enabled ? 'enabled' : 'disabled'}`;
+  }
+
+  return environmentLabel(item);
+}
+
+function isEnvironmentValueItem(item: unknown): boolean {
+  return (
+    typeof item === 'object' &&
+    item !== null &&
+    'enabled' in item &&
+    ('environment' in item || 'environmentId' in item)
+  );
+}
 
 function flattenValue(value: unknown): unknown {
   if (value === null || value === undefined) {
@@ -14,11 +63,27 @@ function flattenValue(value: unknown): unknown {
             : item,
         );
       }
+
+      if (isEnvironmentValueItem(value[0])) {
+        return value.map(flattenEnvironmentValue).sort();
+      }
+
+      if ('name' in value[0]) {
+        return value.map((item) =>
+          typeof item === 'object' && item !== null && 'name' in item
+            ? (item as { name: string }).name
+            : item,
+        );
+      }
     }
     return value;
   }
 
   if (typeof value === 'object') {
+    if (isEnvironmentValueItem(value)) {
+      return flattenEnvironmentValue(value);
+    }
+
     if ('name' in value && typeof (value as { name: unknown }).name === 'string') {
       return (value as { name: string }).name;
     }
@@ -36,7 +101,7 @@ export function sanitizeForAudit(
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(entity)) {
-    if (SENSITIVE_KEYS.has(key)) {
+    if (SKIP_AUDIT_KEYS.has(key)) {
       continue;
     }
 

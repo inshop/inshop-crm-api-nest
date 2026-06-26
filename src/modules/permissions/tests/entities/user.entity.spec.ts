@@ -24,7 +24,7 @@ describe('User entity', () => {
 
   it('maps group roles via roles()', () => {
     const role = new Role();
-    role.role = AppRole.CLIENT_LIST;
+    role.role = AppRole.PROJECT_LIST;
 
     const group = new Group();
     group.roles = [role];
@@ -32,6 +32,6 @@ describe('User entity', () => {
     const user = new User();
     user.group = group;
 
-    expect(user.roles()).toEqual([AppRole.CLIENT_LIST]);
+    expect(user.roles()).toEqual([AppRole.PROJECT_LIST]);
   });
 });

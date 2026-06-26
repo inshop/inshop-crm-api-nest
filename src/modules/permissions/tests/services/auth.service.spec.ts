@@ -32,7 +32,7 @@ describe('AuthService', () => {
 
   const activeUser = (): User => {
     const role = new Role();
-    role.role = AppRole.CLIENT_LIST;
+    role.role = AppRole.PROJECT_LIST;
 
     const group = new Group();
     group.roles = [role];

@@ -1,0 +1,205 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateApiTokenDto } from '../dto/create-api-token.dto';
+import { UpdateApiTokenDto } from '../dto/update-api-token.dto';
+import { ApiToken } from '../entities/api-token.entity';
+import { Project } from '../../projects/entities/project.entity';
+import { Environment } from '../../environments/entities/environment.entity';
+import { buildListWhere } from '../../core/utils/list-filters';
+import { AuditService } from '../../audit/services/audit.service';
+import { AuditEntityType } from '../../audit/constants/audit.constants';
+import { User } from '../../permissions/entities/user.entity';
+import { generateApiToken, hashApiToken } from '../utils/token-hash';
+import { decryptApiToken, encryptApiToken } from '../utils/token-crypto';
+
+const API_TOKEN_RELATIONS = {
+  project: true,
+  environment: true,
+  createdBy: true,
+} as const;
+
+@Injectable()
+export class ApiTokensService {
+  constructor(
+    @InjectRepository(ApiToken)
+    private apiTokensRepository: Repository<ApiToken>,
+    @InjectRepository(Project)
+    private projectsRepository: Repository<Project>,
+    @InjectRepository(Environment)
+    private environmentsRepository: Repository<Environment>,
+    private auditService: AuditService,
+  ) {}
+
+  async create(createApiTokenDto: CreateApiTokenDto, actor?: User) {
+    const { projectId, environmentId, ...rest } = createApiTokenDto;
+    const plainToken = generateApiToken();
+
+    const apiToken = this.apiTokensRepository.create({
+      ...rest,
+      tokenHash: hashApiToken(plainToken),
+      encryptedToken: encryptApiToken(plainToken),
+      project: await this.projectsRepository.findOneByOrFail({ id: projectId }),
+      environment: await this.environmentsRepository.findOneByOrFail({
+        id: environmentId,
+      }),
+      createdBy: actor,
+    });
+
+    const saved = await this.apiTokensRepository.save(apiToken);
+    const result = await this.findOne(saved.id);
+    const { plainToken: _plainToken, ...auditPayload } = result;
+
+    await this.auditService.logCreateIf(
+      actor,
+      AuditEntityType.API_TOKEN,
+      saved.id,
+      auditPayload as unknown as Record<string, unknown>,
+    );
+
+    return result;
+  }
+
+  findAll(take: number, skip: number, filter?: Record<string, string>) {
+    const where = buildListWhere<ApiToken>(
+      filter,
+      {
+        id: 'number',
+        name: 'string',
+        isActive: 'boolean',
+      },
+      {
+        project: { id: 'number' },
+        environment: { id: 'number' },
+      },
+    );
+
+    if (filter?.projectId) {
+      where.project = { id: Number(filter.projectId) };
+    }
+
+    if (filter?.environmentId) {
+      where.environment = { id: Number(filter.environmentId) };
+    }
+
+    return this.apiTokensRepository.findAndCount({
+      take,
+      skip,
+      order: { id: 'DESC' },
+      where,
+      relations: API_TOKEN_RELATIONS,
+    });
+  }
+
+  async findOne(id: number) {
+    const apiToken = await this.apiTokensRepository.findOneOrFail({
+      where: { id },
+      relations: API_TOKEN_RELATIONS,
+    });
+
+    return this.toResponse(apiToken);
+  }
+
+  async regenerateSecret(id: number, actor?: User) {
+    const apiToken = await this.apiTokensRepository.findOneOrFail({
+      where: { id },
+      relations: API_TOKEN_RELATIONS,
+    });
+
+    const before = { ...apiToken } as unknown as Record<string, unknown>;
+    const plainToken = generateApiToken();
+
+    apiToken.tokenHash = hashApiToken(plainToken);
+    apiToken.encryptedToken = encryptApiToken(plainToken);
+
+    await this.apiTokensRepository.save(apiToken);
+    const result = await this.findOne(id);
+
+    await this.auditService.logUpdateIf(
+      actor,
+      AuditEntityType.API_TOKEN,
+      id,
+      before,
+      result as unknown as Record<string, unknown>,
+    );
+
+    return result;
+  }
+
+  private toResponse(apiToken: ApiToken) {
+    const plainToken = apiToken.encryptedToken
+      ? decryptApiToken(apiToken.encryptedToken)
+      : undefined;
+
+    return {
+      id: apiToken.id,
+      name: apiToken.name,
+      project: apiToken.project,
+      environment: apiToken.environment,
+      isActive: apiToken.isActive,
+      createdBy: apiToken.createdBy,
+      createdAt: apiToken.createdAt,
+      ...(plainToken ? { plainToken } : {}),
+    };
+  }
+
+  findByTokenHash(tokenHash: string) {
+    return this.apiTokensRepository.findOne({
+      where: { tokenHash, isActive: true },
+      relations: { project: true, environment: true },
+    });
+  }
+
+  async update(id: number, updateApiTokenDto: UpdateApiTokenDto, actor?: User) {
+    const apiToken = await this.apiTokensRepository.findOneOrFail({
+      where: { id },
+      relations: API_TOKEN_RELATIONS,
+    });
+
+    const before = { ...apiToken } as unknown as Record<string, unknown>;
+    const { id: _id, projectId, environmentId, ...rest } = updateApiTokenDto;
+
+    Object.assign(apiToken, rest);
+
+    if (projectId !== undefined) {
+      apiToken.project = await this.projectsRepository.findOneByOrFail({
+        id: projectId,
+      });
+    }
+
+    if (environmentId !== undefined) {
+      apiToken.environment = await this.environmentsRepository.findOneByOrFail({
+        id: environmentId,
+      });
+    }
+
+    await this.apiTokensRepository.save(apiToken);
+    const saved = await this.findOne(id);
+
+    await this.auditService.logUpdateIf(
+      actor,
+      AuditEntityType.API_TOKEN,
+      id,
+      before,
+      saved as unknown as Record<string, unknown>,
+    );
+
+    return saved;
+  }
+
+  async remove(id: number, actor?: User) {
+    const apiToken = await this.apiTokensRepository.findOne({
+      where: { id },
+      relations: API_TOKEN_RELATIONS,
+    });
+
+    await this.auditService.logDeleteIf(
+      actor,
+      AuditEntityType.API_TOKEN,
+      id,
+      apiToken as unknown as Record<string, unknown>,
+    );
+
+    return this.apiTokensRepository.delete(id);
+  }
+}
