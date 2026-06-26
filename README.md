@@ -1,21 +1,127 @@
-# API Config API
+# InShop CRM — API Config (NestJS API)
 
-NestJS backend for the API Config admin panel.
+**NestJS REST API for feature flag management, RBAC, audit logging, and client bootstrap endpoints.**
+
+This is the backend for [InShop CRM API Config Admin](https://github.com/inshopgroup/inshop-crm-admin-next) — a self-hosted system to manage boolean feature flags per project and environment, control admin access through groups and roles, and expose read-only flag endpoints to client apps via scoped API tokens.
+
+| | |
+|---|---|
+| **Admin dashboard** | [inshop-crm-admin-next](https://github.com/inshopgroup/inshop-crm-admin-next) |
+| **Stack** | NestJS 11 · TypeORM · PostgreSQL · JWT · Swagger |
+| **Default URL** | [http://localhost:4000](http://localhost:4000) |
+| **Swagger UI** | [http://localhost:4000/api](http://localhost:4000/api) |
+
+## Table of contents
+
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Run](#run)
+- [Authentication](#authentication)
+- [API overview](#api-overview)
+- [Client feature flags (API token)](#client-feature-flags-api-token)
+- [Admin API tokens](#admin-api-tokens)
+- [Permissions and roles](#permissions-and-roles)
+- [Audit log](#audit-log)
+- [Dashboard UI](#dashboard-ui)
+- [Architecture](#architecture)
+- [Tests](#tests)
+
+## Features
+
+### Feature flags
+
+- CRUD for flags with name, unique code, expiry date, and linked projects
+- Per-environment enable/disable values (`PATCH /api/admin/feature-flags/:id/environments/:environmentId`)
+- Client bootstrap endpoint returns all active flags for a project + environment
+- Single-flag lookup by code
+- A flag is **active** when linked to the project, enabled in that environment, and not expired
+
+### Projects and environments
+
+- Projects and environments each have name, code, and active status
+- Project/environment **codes** are used in client API query params and API token scope
+
+### Permissions (RBAC)
+
+- **Users** — admin accounts with email/password, group membership, active flag
+- **Groups** — named collections of module roles (create, update, list, details, delete)
+- **Modules & roles** — auto-synced on startup; admin group receives all roles
+- JWT auth with login, refresh, logout, and change-password endpoints
+
+### API tokens
+
+- Scoped to one project + one environment
+- Prefix `ff_…`; plain value shown once on create or regenerate
+- Used by client apps to read feature flags without admin JWT
+
+### Audit log
+
+- Records create, update, delete, login, and logout actions
+- Stores JSON change diffs and metadata
+- Filterable list for compliance and debugging
+
+## Quick start
+
+```bash
+git clone https://github.com/inshopgroup/inshop-crm-api-nest.git
+cd inshop-crm-api-nest
+yarn install
+cp .env.example .env
+```
+
+Set `JWT_SECRET` in `.env`, then start PostgreSQL and the API:
+
+```bash
+docker compose up -d
+yarn start:dev
+```
+
+Open Swagger at [http://localhost:4000/api](http://localhost:4000/api).
+
+Start the [admin dashboard](https://github.com/inshopgroup/inshop-crm-admin-next#quick-start) for the web UI, or use the API directly.
+
+Default admin (seeded on first startup):
+
+| Email | Password |
+|-------|----------|
+| `admin@admin.admin` | `admin@admin.admin` |
+
+Disable seeding with `SEED_ADMIN=false` in `.env`.
 
 ## Prerequisites
 
-- Node.js 22+
-- Yarn
-- Docker (for PostgreSQL)
+- **Node.js** 22+
+- **Yarn**
+- **Docker** (for PostgreSQL)
 
-## Setup
+## Installation
 
 ```bash
 yarn install
 cp .env.example .env
 ```
 
-Fill in `JWT_SECRET` in `.env`, then start PostgreSQL:
+## Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `4000` | HTTP listen port |
+| `JWT_SECRET` | — | **Required.** Secret for signing JWTs |
+| `DATABASE_TYPE` | `postgres` | Database driver |
+| `DATABASE_HOST` | `localhost` | Postgres host |
+| `DATABASE_PORT` | `5432` | Postgres port |
+| `DATABASE_NAME` | `api` | Database name |
+| `DATABASE_USER` | `api` | Database user |
+| `DATABASE_PASSWORD` | `api` | Database password |
+| `DATABASE_SYNCHRONIZE` | `true` | TypeORM schema sync (dev only) |
+| `DATABASE_TEST_NAME` | `api_test` | Test database name |
+| `DATABASE_TEST_PORT` | `5433` | Test database port |
+| `SEED_ADMIN` | enabled | Set to `false` to skip default admin user |
+
+### Docker services
 
 ```bash
 docker compose up -d
@@ -26,7 +132,7 @@ docker compose up -d
 | `db` | 5432 | `api` | Development |
 | `db-test` | 5433 | `api_test` | Integration and e2e tests |
 
-Start the test database when running integration or e2e tests:
+For tests:
 
 ```bash
 docker compose up -d db-test
@@ -35,32 +141,108 @@ docker compose up -d db-test
 ## Run
 
 ```bash
+# Development (watch mode)
 yarn start:dev
+
+# Production build
+yarn build
+yarn start:prod
 ```
 
-API runs at `http://localhost:4000` (see `PORT` in `.env`). Swagger UI: `http://localhost:4000/api`.
+- API: `http://localhost:4000` (or `PORT` from `.env`)
+- OpenAPI JSON: `http://localhost:4000/api-json`
+- Swagger UI: `http://localhost:4000/api`
 
-Default admin user (seeded on startup): `admin@admin.admin` / `admin@admin.admin`
+## Authentication
 
-## API endpoints
+| Audience | Header | How to obtain |
+|----------|--------|---------------|
+| Admin panel / CRUD | `Authorization: Bearer <JWT>` | `POST /api/admin/auth/login` or [dashboard sign-in](https://github.com/inshopgroup/inshop-crm-admin-next#sign-in) |
+| Client feature flags | `Authorization: Bearer <API token>` | Create under [Permissions → API Tokens](https://github.com/inshopgroup/inshop-crm-admin-next#typical-workflow) or `POST /api/admin/api-tokens` |
 
-### Authentication
+### Auth endpoints
 
-| Audience | Header | Notes |
-|----------|--------|-------|
-| Admin panel / CRUD | `Authorization: Bearer <JWT>` | Login via `POST /api/admin/auth/login` |
-| Client feature flags | `Authorization: Bearer <API token>` | Token from admin **API Tokens** (`ff_…`); scoped to one project + environment |
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/admin/auth/login` | Email + password → JWT |
+| `POST` | `/api/admin/auth/refresh` | Refresh JWT |
+| `POST` | `/api/admin/auth/logout` | Invalidate session |
+| `POST` | `/api/admin/auth/change-password` | Change password (authenticated) |
 
-### Client feature flags (API token)
+## API overview
 
-Query params `project` and `environment` are **required** and must be the project/environment **codes**. They must match the API token scope.
+All admin routes require JWT + role guards unless noted. Full request/response schemas: [Swagger UI](http://localhost:4000/api).
+
+### Projects — `/api/admin/projects`
+
+| Method | Path | Role |
+|--------|------|------|
+| `POST` | `/` | `ROLE_PROJECT_CREATE` |
+| `GET` | `/` | `ROLE_PROJECT_LIST` |
+| `GET` | `/:id` | `ROLE_PROJECT_DETAILS` |
+| `PATCH` | `/:id` | `ROLE_PROJECT_UPDATE` |
+| `DELETE` | `/:id` | `ROLE_PROJECT_DELETE` |
+
+### Environments — `/api/admin/environments`
+
+| Method | Path | Role |
+|--------|------|------|
+| `POST` | `/` | `ROLE_ENVIRONMENT_CREATE` |
+| `GET` | `/` | `ROLE_ENVIRONMENT_LIST` |
+| `GET` | `/:id` | `ROLE_ENVIRONMENT_DETAILS` |
+| `PATCH` | `/:id` | `ROLE_ENVIRONMENT_UPDATE` |
+| `DELETE` | `/:id` | `ROLE_ENVIRONMENT_DELETE` |
+
+### Feature flags — `/api/admin/feature-flags`
+
+| Method | Path | Role |
+|--------|------|------|
+| `POST` | `/` | `ROLE_FEATURE_FLAG_CREATE` |
+| `GET` | `/` | `ROLE_FEATURE_FLAG_LIST` |
+| `GET` | `/:id` | `ROLE_FEATURE_FLAG_DETAILS` |
+| `PATCH` | `/:id` | `ROLE_FEATURE_FLAG_UPDATE` |
+| `PATCH` | `/:id/environments/:environmentId` | `ROLE_FEATURE_FLAG_UPDATE` |
+| `DELETE` | `/:id` | `ROLE_FEATURE_FLAG_DELETE` |
+
+Manage flags in the [dashboard Feature Flags section](https://github.com/inshopgroup/inshop-crm-admin-next#feature-flags).
+
+### Users — `/api/admin/users`
+
+| Method | Path | Role |
+|--------|------|------|
+| `POST` | `/` | `ROLE_USER_CREATE` |
+| `GET` | `/` | `ROLE_USER_LIST` |
+| `GET` | `/:id` | `ROLE_USER_DETAILS` |
+| `PATCH` | `/:id` | `ROLE_USER_UPDATE` |
+| `DELETE` | `/:id` | `ROLE_USER_DELETE` |
+
+### Groups — `/api/admin/groups`
+
+| Method | Path | Role |
+|--------|------|------|
+| `POST` | `/` | `ROLE_GROUP_CREATE` |
+| `GET` | `/` | `ROLE_GROUP_LIST` |
+| `GET` | `/:id` | `ROLE_GROUP_DETAILS` |
+| `PATCH` | `/:id` | `ROLE_GROUP_UPDATE` |
+| `DELETE` | `/:id` | `ROLE_GROUP_DELETE` |
+
+### Modules and roles — `/api/admin/modules`
+
+| Method | Path | Role |
+|--------|------|------|
+| `GET` | `/` | Authenticated |
+| `GET` | `/:moduleId/roles` | Authenticated |
+
+Modules: `users`, `groups`, `projects`, `environments`, `featureFlags`, `audit`, `apiTokens`.
+
+## Client feature flags (API token)
+
+For application runtimes — not the admin panel. Query params `project` and `environment` are **required** and must match the API token's project/environment **codes**.
 
 | Method | Path | Response |
 |--------|------|----------|
-| `GET` | `/api/feature-flags/bootstrap` | `{ "feature_flags": { "<code>": true } }` — all active flags for project + environment |
+| `GET` | `/api/feature-flags/bootstrap` | `{ "feature_flags": { "<code>": true } }` |
 | `GET` | `/api/feature-flags/:code` | `{ "enabled": true \| false }` — `404` if code does not exist |
-
-A flag is **active** when it is linked to the project, enabled for that environment, and not expired.
 
 **Examples** (replace `my-app`, `staging`, and the token):
 
@@ -74,14 +256,17 @@ curl -s "http://localhost:4000/api/feature-flags/checkout?project=my-app&environ
   -H "Authorization: Bearer ff_your_api_token"
 ```
 
-### Admin API tokens
+Create tokens in the [dashboard](https://github.com/inshopgroup/inshop-crm-admin-next#api-tokens) — it shows copy-ready `curl` samples with your project and environment codes.
 
-Manage tokens in the admin panel under **Permissions → API Tokens**, or via:
+## Admin API tokens
+
+Manage via [dashboard → Permissions → API Tokens](https://github.com/inshopgroup/inshop-crm-admin-next#api-tokens) or REST:
 
 | Method | Path | Role |
 |--------|------|------|
 | `POST` | `/api/admin/api-tokens` | `ROLE_API_TOKEN_CREATE` — returns `plainToken` once |
 | `GET` | `/api/admin/api-tokens` | `ROLE_API_TOKEN_LIST` |
+| `POST` | `/api/admin/api-tokens/:id/regenerate` | `ROLE_API_TOKEN_UPDATE` — new `plainToken` |
 | `GET` | `/api/admin/api-tokens/:id` | `ROLE_API_TOKEN_DETAILS` |
 | `PATCH` | `/api/admin/api-tokens/:id` | `ROLE_API_TOKEN_UPDATE` |
 | `DELETE` | `/api/admin/api-tokens/:id` | `ROLE_API_TOKEN_DELETE` |
@@ -103,11 +288,65 @@ curl -s -X POST http://localhost:4000/api/admin/api-tokens \
   -d '{"name":"Local dev","projectId":1,"environmentId":1,"isActive":true}'
 ```
 
-Other admin resources (users, groups, projects, environments, feature flags, audit) are under `/api/admin/*` with JWT + role guards. See Swagger at `http://localhost:4000/api`.
+## Permissions and roles
+
+On startup, `RolesSyncService` creates modules, roles, an `admin` group with all roles, and the default admin user.
+
+Each module exposes five roles where applicable:
+
+| Module | Roles |
+|--------|-------|
+| Users | `ROLE_USER_*` |
+| Groups | `ROLE_GROUP_*` |
+| Projects | `ROLE_PROJECT_*` |
+| Environments | `ROLE_ENVIRONMENT_*` |
+| Feature flags | `ROLE_FEATURE_FLAG_*` |
+| Audit | `ROLE_AUDIT_LIST`, `ROLE_AUDIT_DETAILS` |
+| API tokens | `ROLE_API_TOKEN_*` |
+
+Assign roles to groups in the [dashboard Groups section](https://github.com/inshopgroup/inshop-crm-admin-next#groups).
+
+## Audit log
+
+| Method | Path | Role |
+|--------|------|------|
+| `GET` | `/api/admin/audits` | `ROLE_AUDIT_LIST` |
+| `GET` | `/api/admin/audits/:id` | `ROLE_AUDIT_DETAILS` |
+
+Tracked actions: `create`, `update`, `delete`, `login`, `logout`.
+
+Entity types: `user`, `group`, `project`, `environment`, `feature_flag`, `api_token`, `auth`.
+
+View the global log in the [dashboard Audit Log](https://github.com/inshopgroup/inshop-crm-admin-next#audit-log) or per-entity history on feature flag details.
+
+## Dashboard UI
+
+The [admin dashboard](https://github.com/inshopgroup/inshop-crm-admin-next) provides:
+
+- Feature flag grid with environment toggles and filters
+- CRUD dialogs for all resources
+- API token management with `curl` examples
+- Audit history with change diffs
+
+[Screenshots](https://github.com/inshopgroup/inshop-crm-admin-next#screenshots) · [Quick start](https://github.com/inshopgroup/inshop-crm-admin-next#quick-start)
+
+## Architecture
+
+```
+Client apps ──GET /api/feature-flags/*──► NestJS API ◄──JWT── Admin dashboard (Next.js)
+                                              │
+                                         PostgreSQL
+```
+
+- Global prefix: `/api`
+- TypeORM entities with PostgreSQL (`jsonb` for audit changes)
+- `class-validator` + custom `IsUnique` / `Exists` decorators
+- Helmet security headers
+- Scheduled job: expired user token cleanup (daily at midnight)
 
 ## Tests
 
-Test config is loaded from [`.env.test`](.env.test) via [`test/setup.ts`](test/setup.ts). Integration and e2e tests connect to the `db-test` service on `localhost:5433`.
+Config loaded from [`.env.test`](.env.test) via [`test/setup.ts`](test/setup.ts). Integration and e2e tests use `db-test` on `localhost:5433`.
 
 ```bash
 docker compose up -d db-test
@@ -115,7 +354,7 @@ docker compose up -d db-test
 # Unit tests (no database)
 yarn test:unit
 
-# Integration tests (real Postgres, test DB)
+# Integration tests (real Postgres)
 yarn test:integration
 
 # E2E smoke tests (HTTP + Postgres)
@@ -128,4 +367,6 @@ yarn test:all
 yarn test:cov
 ```
 
-CI runs the same suite with a Postgres service; see [`.github/workflows/test.yml`](.github/workflows/test.yml).
+CI runs the same suite with a Postgres service — see [`.github/workflows/test.yml`](.github/workflows/test.yml).
+
+For frontend tests, see [dashboard testing](https://github.com/inshopgroup/inshop-crm-admin-next#testing).
