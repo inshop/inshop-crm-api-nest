@@ -182,6 +182,10 @@ describe('Feature flags client API (e2e)', () => {
       )
       .set('Authorization', `Bearer ${plainToken}`)
       .expect(404)
-      .expect({ message: 'Project not found', statusCode: 404 });
+      .expect({
+        message: 'Project not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
   });
 });
